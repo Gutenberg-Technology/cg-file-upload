@@ -21,11 +21,12 @@ this.onmessage = function(e) {
   file = e.data.file;
   url = e.data.url;
   blobs = [];
-  bytes_per_chunk = 1024 * 1024 * 36;
+  bytes_per_chunk = 1024 * 1024 * 10;
   start = 0;
   end = bytes_per_chunk;
   size = file.size;
   name = file.name.replace(/[^a-zA-Z-_.0-9]/g, '_');
+  name = (Date.now()) + "-" + name;
   while (start < size) {
     blobs.push(file.slice(start, end));
     start = end;

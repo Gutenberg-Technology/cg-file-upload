@@ -3,7 +3,7 @@ angular.module('cg.fileupload', []);
 
 /*
 <div
-    cg-file-upload="MyCtrl.fileUrl"
+    cg-file-upload
     upload-url="http://path/to/upload/endpoint"
     accept="*.xml,image/*"
     progress="MyCtrl.progress"
@@ -19,7 +19,6 @@ angular.module('cg.fileupload').directive('cgFileUpload', function(cgFileUploadC
     restrict: 'A',
     scope: {
       accept: '@',
-      cgFileUpload: '=?',
       progress: '=?',
       filename: '=?',
       onupload: '&',
@@ -43,7 +42,6 @@ angular.module('cg.fileupload').directive('cgFileUpload', function(cgFileUploadC
         return scope.$evalAsync();
       };
       _onLoad = function(file) {
-        scope.cgFileUpload = file.directurl;
         if (typeof scope.onupload === "function") {
           scope.onupload({
             $file: file
@@ -159,9 +157,14 @@ angular.module('cg.fileupload').factory('cgFileUploadCtrl', function($timeout) {
     };
 
     cgFileUploadCtrl.prototype._loadHandler = function(response) {
-      var file;
-      file = JSON.parse(response).file;
-      file.size = this._size;
+      var e, error, file;
+      try {
+        file = JSON.parse(response);
+        file.size = this._size;
+      } catch (error) {
+        e = error;
+        file = response;
+      }
       if (typeof this.onLoad === "function") {
         this.onLoad(file);
       }
@@ -192,7 +195,7 @@ angular.module('cg.fileupload').factory('cgFileUploadCtrl', function($timeout) {
       }
       this._disabled = true;
       script = document.querySelectorAll('[src*="cg-file-upload"]')[0];
-      workerUrl = script.src.replace('cg-file-upload', 'cg-file-upload-worker');
+      workerUrl = script.src.replace('cg-file-upload.js', 'cg-file-upload-worker.js');
       worker = new Worker(workerUrl);
       worker.onmessage = (function(_this) {
         return function(e) {
