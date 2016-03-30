@@ -48,7 +48,7 @@ angular.module('cg.fileupload').factory 'cgFileUploadCtrl', ($timeout) ->
             @_disabled = true
 
             script = document.querySelectorAll('[src*="cg-file-upload"]')[0]
-            workerUrl = script.src.replace 'cg-file-upload', 'cg-file-upload-worker'
+            workerUrl = script.src.replace 'cg-file-upload.js', 'cg-file-upload-worker.js'
             worker = new Worker workerUrl
             worker.onmessage = (e) =>
                 switch e.data.message
