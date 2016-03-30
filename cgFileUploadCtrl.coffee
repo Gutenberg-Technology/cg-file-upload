@@ -26,8 +26,10 @@ angular.module('cg.fileupload').factory 'cgFileUploadCtrl', ($timeout) ->
             $timeout => @_input.click()
 
         _loadHandler: (response) ->
-            file = JSON.parse(response).file
-            file.size = @_size
+            try
+                file = JSON.parse(response)
+                file.size = @_size
+            catch e then file = response
             @onLoad?(file)
             @_disabled = false
             @_createInput()
