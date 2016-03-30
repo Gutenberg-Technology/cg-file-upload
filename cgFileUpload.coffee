@@ -1,6 +1,6 @@
 ###
 <div
-    cg-file-upload="MyCtrl.fileUrl"
+    cg-file-upload
     upload-url="http://path/to/upload/endpoint"
     accept="*.xml,image/*"
     progress="MyCtrl.progress"
@@ -16,7 +16,6 @@ angular.module('cg.fileupload').directive 'cgFileUpload', (cgFileUploadCtrl) ->
     restrict: 'A'
     scope:
         accept: '@'
-        cgFileUpload: '=?'
         progress: '=?'
         filename: '=?'
         onupload: '&'
@@ -38,7 +37,6 @@ angular.module('cg.fileupload').directive 'cgFileUpload', (cgFileUploadCtrl) ->
             scope.$evalAsync()
 
         _onLoad = (file) ->
-            scope.cgFileUpload = file.directurl
             scope.onupload?($file: file)
             _finally()
 
