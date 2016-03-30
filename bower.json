@@ -1,0 +1,30 @@
+{
+  "name": "cg-file-upload",
+  "description": "Angular directive and controller to manage file upload",
+  "main": "cg-file-upload.js",
+  "authors": [
+    "Christophe Gourmelon"
+  ],
+  "license": "MIT",
+  "keywords": [
+    "angular",
+    "file",
+    "upload",
+    "directive"
+  ],
+  "homepage": "https://github.com/roparz/cg-file-upload",
+  "moduleType": [],
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests",
+    "**/*.coffee",
+    "coffeelint.json",
+    "package.json"
+  ],
+  "dependencies": {
+    "angular": "1.5.1"
+  }
+}
