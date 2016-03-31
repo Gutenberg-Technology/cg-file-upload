@@ -12,7 +12,7 @@
     "upload",
     "directive"
   ],
-  "homepage": "https://github.com/roparz/cg-file-upload",
+  "homepage": "https://github.com/Gutenberg-Technology/cg-file-upload",
   "moduleType": [],
   "ignore": [
     "**/.*",
