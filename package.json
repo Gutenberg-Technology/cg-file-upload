@@ -1,6 +1,6 @@
 {
   "name": "cg-file-upload",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "Angular directive and controller to manage file upload",
   "main": "cg-file-upload.js",
   "scripts": {
