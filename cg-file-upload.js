@@ -12,9 +12,10 @@ angular.module('cg.fileupload', []);
     onerror="MyCtrl.onError($error)"
     onupload="MyCtrl.onUpload($file)"
     ng-disabled="MyCtrl.disabled"
+    awscredentials="MyCtrl.credentials"
 ></div>
  */
-angular.module('cg.fileupload').directive('cgFileUpload', function(cgFileUploadCtrl) {
+angular.module('cg.fileupload').directive('cgFileUpload', function(cgFileUploadCtrl, $parse) {
   return {
     restrict: 'A',
     scope: {
@@ -71,7 +72,8 @@ angular.module('cg.fileupload').directive('cgFileUpload', function(cgFileUploadC
       });
       options = {
         accept: scope.accept,
-        uploadUrl: scope.uploadUrl
+        uploadUrl: scope.uploadUrl,
+        awscredentials: $parse(attrs.awscredentials)(scope)
       };
       events = {
         onUploadStart: _onUploadStart,
@@ -109,12 +111,12 @@ angular.module('cg.fileupload').directive('cgFileUpload', function(cgFileUploadC
 
 var bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
 
-angular.module('cg.fileupload').factory('cgFileUploadCtrl', function($timeout) {
+angular.module('cg.fileupload').factory('cgFileUploadCtrl', function($timeout, $q) {
   var cgFileUploadCtrl;
   cgFileUploadCtrl = (function() {
     function cgFileUploadCtrl(elem, arg, arg1) {
       this.elem = elem != null ? elem : null;
-      this.accept = arg.accept, this.uploadUrl = arg.uploadUrl;
+      this.accept = arg.accept, this.uploadUrl = arg.uploadUrl, this.awscredentials = arg.awscredentials;
       this.onUploadStart = arg1.onUploadStart, this.onProgress = arg1.onProgress, this.onLoad = arg1.onLoad, this.onError = arg1.onError;
       this._errorHandler = bind(this._errorHandler, this);
       this.start = bind(this.start, this);
@@ -156,15 +158,13 @@ angular.module('cg.fileupload').factory('cgFileUploadCtrl', function($timeout) {
       })(this));
     };
 
-    cgFileUploadCtrl.prototype._loadHandler = function(response) {
-      var e, error, file;
+    cgFileUploadCtrl.prototype._loadHandler = function(file) {
       try {
-        file = JSON.parse(response);
+        if (typeof file !== 'object') {
+          file = JSON.parse(file);
+        }
         file.size = this._size;
-      } catch (error) {
-        e = error;
-        file = response;
-      }
+      } catch (undefined) {}
       if (typeof this.onLoad === "function") {
         this.onLoad(file);
       }
@@ -180,8 +180,66 @@ angular.module('cg.fileupload').factory('cgFileUploadCtrl', function($timeout) {
       return this._createInput();
     };
 
+    cgFileUploadCtrl.prototype._uploadS3 = function(file) {
+      var awsS3, bucket, defer, fileParams;
+      defer = $q.defer();
+      awsS3 = this.awscredentials;
+      AWS.config.update({
+        signatureVersion: 'v4',
+        region: awsS3.region
+      });
+      AWS.config.credentials = new AWS.Credentials({
+        accessKeyId: awsS3.accessKeyId,
+        sessionToken: awsS3.sessionToken,
+        secretAccessKey: awsS3.secretAccessKey
+      });
+      bucket = new AWS.S3({
+        params: {
+          Bucket: awsS3.bucket
+        }
+      });
+      fileParams = {
+        Key: file.name,
+        ContentType: file.type,
+        Body: file
+      };
+      bucket.upload(fileParams, function(err, data) {
+        if (err) {
+          return defer.reject(err);
+        } else {
+          return defer.resolve({
+            url: data.Location
+          });
+        }
+      });
+      return defer.promise;
+    };
+
+    cgFileUploadCtrl.prototype._uploadWorker = function(file) {
+      var data, defer, script, worker, workerUrl;
+      defer = $q.defer();
+      script = document.querySelectorAll('[src*="file-upload"]')[0];
+      workerUrl = script.src.replace('file-upload.js', 'file-upload-worker.js');
+      worker = new Worker(workerUrl);
+      worker.onmessage = function(e) {
+        switch (e.data.message) {
+          case 'load':
+            return defer.resolve(e.data.body);
+          case 'progress':
+            return defer.notify(e.data.body);
+        }
+      };
+      worker.onerror = defer.reject;
+      data = {
+        file: file,
+        url: this.uploadUrl
+      };
+      worker.postMessage(data);
+      return defer.promise;
+    };
+
     cgFileUploadCtrl.prototype.upload = function(file) {
-      var data, script, worker, workerUrl;
+      var func;
       if (!file) {
         return;
       }
@@ -194,25 +252,20 @@ angular.module('cg.fileupload').factory('cgFileUploadCtrl', function($timeout) {
         });
       }
       this._disabled = true;
-      script = document.querySelectorAll('[src*="cg-file-upload"]')[0];
-      workerUrl = script.src.replace('cg-file-upload.js', 'cg-file-upload-worker.js');
-      worker = new Worker(workerUrl);
-      worker.onmessage = (function(_this) {
-        return function(e) {
-          switch (e.data.message) {
-            case 'load':
-              return _this._loadHandler(e.data.body);
-            case 'progress':
-              return typeof _this.onProgress === "function" ? _this.onProgress(e.data.body) : void 0;
-          }
+      func = this.awscredentials ? '_uploadS3' : '_uploadWorker';
+      return this[func](file).then((function(_this) {
+        return function(data) {
+          return _this._loadHandler(data);
         };
-      })(this);
-      worker.onerror = this._errorHandler;
-      data = {
-        file: file,
-        url: this.uploadUrl
-      };
-      return worker.postMessage(data);
+      })(this), (function(_this) {
+        return function(err) {
+          return _this._errorHandler(err);
+        };
+      })(this), (function(_this) {
+        return function(data) {
+          return typeof _this.onProgress === "function" ? _this.onProgress(data) : void 0;
+        };
+      })(this));
     };
 
     return cgFileUploadCtrl;
