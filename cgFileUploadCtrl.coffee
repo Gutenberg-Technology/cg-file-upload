@@ -1,10 +1,10 @@
-angular.module('cg.fileupload').factory 'cgFileUploadCtrl', ($timeout) ->
+angular.module('cg.fileupload').factory 'cgFileUploadCtrl', ($timeout, $q) ->
 
     class cgFileUploadCtrl
 
         constructor: (
             @elem = null
-            { @accept, @uploadUrl }
+            { @accept, @uploadUrl, @awscredentials }
             { @onUploadStart, @onProgress, @onLoad, @onError }
         ) ->
             @_createInput()
@@ -25,11 +25,11 @@ angular.module('cg.fileupload').factory 'cgFileUploadCtrl', ($timeout) ->
             return if @_disabled
             $timeout => @_input.click()
 
-        _loadHandler: (response) ->
+        _loadHandler: (file) ->
             try
-                file = JSON.parse(response)
+                file = JSON.parse(file) unless typeof file is 'object'
                 file.size = @_size
-            catch e then file = response
+
             @onLoad?(file)
             @_disabled = false
             @_createInput()
@@ -38,6 +38,57 @@ angular.module('cg.fileupload').factory 'cgFileUploadCtrl', ($timeout) ->
             @onError?(e)
             @_disabled = false
             @_createInput()
+
+
+
+        _uploadS3: (file) ->
+            defer = $q.defer()
+            awsS3 = @awscredentials
+
+            AWS.config.update(
+                signatureVersion: 'v4'
+                region: awsS3.region
+            )
+            AWS.config.credentials = new AWS.Credentials(
+                accessKeyId: awsS3.accessKeyId
+                sessionToken: awsS3.sessionToken
+                secretAccessKey: awsS3.secretAccessKey
+            )
+            bucket = new AWS.S3(
+                params: Bucket: awsS3.bucket
+            )
+
+            fileParams =
+                Key: file.name
+                ContentType: file.type
+                Body: file
+
+            bucket.upload fileParams, (err, data) ->
+                if err
+                    defer.reject(err)
+                else defer.resolve(url: data.Location)
+
+            return defer.promise
+
+
+        _uploadWorker: (file) ->
+            defer = $q.defer()
+            script = document.querySelectorAll('[src*="file-upload"]')[0]
+            workerUrl = script.src.replace 'file-upload.js', 'file-upload-worker.js'
+            worker = new Worker workerUrl
+            worker.onmessage = (e) ->
+                switch e.data.message
+                    when 'load' then defer.resolve(e.data.body)
+                    when 'progress' then defer.notify(e.data.body)
+
+            worker.onerror = defer.reject
+
+            data =
+                file: file
+                url: @uploadUrl
+            worker.postMessage data
+
+            return defer.promise
 
         upload: (file) ->
             return unless file
@@ -49,19 +100,12 @@ angular.module('cg.fileupload').factory 'cgFileUploadCtrl', ($timeout) ->
             )
             @_disabled = true
 
-            script = document.querySelectorAll('[src*="cg-file-upload"]')[0]
-            workerUrl = script.src.replace 'cg-file-upload.js', 'cg-file-upload-worker.js'
-            worker = new Worker workerUrl
-            worker.onmessage = (e) =>
-                switch e.data.message
-                    when 'load' then @_loadHandler(e.data.body)
-                    when 'progress' then @onProgress?(e.data.body)
+            func = if @awscredentials then '_uploadS3' else '_uploadWorker'
+            this[func](file).then(
+                (data) => @_loadHandler(data) # success
+                (err) => @_errorHandler(err) # error
+                (data) => @onProgress?(data) # notify
+            )
 
-            worker.onerror = @_errorHandler
-
-            data =
-                file: file
-                url: @uploadUrl
-            worker.postMessage data
 
     return cgFileUploadCtrl

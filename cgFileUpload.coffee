@@ -9,9 +9,10 @@
     onerror="MyCtrl.onError($error)"
     onupload="MyCtrl.onUpload($file)"
     ng-disabled="MyCtrl.disabled"
+    awscredentials="MyCtrl.credentials"
 ></div>
 ###
-angular.module('cg.fileupload').directive 'cgFileUpload', (cgFileUploadCtrl) ->
+angular.module('cg.fileupload').directive 'cgFileUpload', (cgFileUploadCtrl, $parse) ->
 
     restrict: 'A'
     scope:
@@ -57,6 +58,7 @@ angular.module('cg.fileupload').directive 'cgFileUpload', (cgFileUploadCtrl) ->
         options =
             accept: scope.accept
             uploadUrl: scope.uploadUrl
+            awscredentials: $parse(attrs.awscredentials)(scope)
 
         events =
             onUploadStart: _onUploadStart
