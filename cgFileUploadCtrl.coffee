@@ -58,10 +58,13 @@ angular.module('cg.fileupload').factory 'cgFileUploadCtrl', ($timeout, $q) ->
                 params: Bucket: awsS3.bucket
             )
 
+            _fileName = if awsS3.destFolder then "#{ awsS3.destFolder }/#{ file.name }" else file.name
+
             fileParams =
-                Key: file.name
+                Key: _fileName
                 ContentType: file.type
                 Body: file
+                ACL: "public-read"
 
             bucket.upload fileParams, (err, data) ->
                 if err
