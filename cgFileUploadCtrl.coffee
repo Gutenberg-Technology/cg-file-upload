@@ -58,7 +58,9 @@ angular.module('cg.fileupload').factory 'cgFileUploadCtrl', ($timeout, $q) ->
                 params: Bucket: awsS3.bucket
             )
 
+            _prefixRand = "#{ Math.floor(Math.random() * 10000) }-#{ Date.now() }_"
             _fileName = if awsS3.destFolder then "#{ awsS3.destFolder }/#{ file.name }" else file.name
+            _fileName = "#{_prefixRand}#{_fileName}"
 
             fileParams =
                 Key: _fileName
