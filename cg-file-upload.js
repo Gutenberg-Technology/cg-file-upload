@@ -199,8 +199,7 @@ angular.module('cg.fileupload').factory('cgFileUploadCtrl', function($timeout, $
         }
       });
       _prefixRand = (Math.floor(Math.random() * 10000)) + "-" + (Date.now()) + "_";
-      _fileName = awsS3.destFolder ? awsS3.destFolder + "/" + file.name : file.name;
-      _fileName = "" + _prefixRand + _fileName;
+      _fileName = awsS3.destFolder ? awsS3.destFolder + "/" + _prefixRand + file.name : "" + _prefixRand + file.name;
       fileParams = {
         Key: _fileName,
         ContentType: file.type,
