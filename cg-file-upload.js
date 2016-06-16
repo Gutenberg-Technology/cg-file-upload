@@ -181,7 +181,7 @@ angular.module('cg.fileupload').factory('cgFileUploadCtrl', function($timeout, $
     };
 
     cgFileUploadCtrl.prototype._uploadS3 = function(file) {
-      var _fileName, awsS3, bucket, defer, fileParams;
+      var _fileName, _prefixRand, awsS3, bucket, defer, fileParams;
       defer = $q.defer();
       awsS3 = this.awscredentials;
       AWS.config.update({
@@ -198,7 +198,9 @@ angular.module('cg.fileupload').factory('cgFileUploadCtrl', function($timeout, $
           Bucket: awsS3.bucket
         }
       });
+      _prefixRand = (Math.floor(Math.random() * 10000)) + "-" + (Date.now()) + "_";
       _fileName = awsS3.destFolder ? awsS3.destFolder + "/" + file.name : file.name;
+      _fileName = "" + _prefixRand + _fileName;
       fileParams = {
         Key: _fileName,
         ContentType: file.type,
