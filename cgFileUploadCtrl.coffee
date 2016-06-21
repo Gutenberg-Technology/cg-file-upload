@@ -5,7 +5,7 @@ angular.module('cg.fileupload').factory 'cgFileUploadCtrl', ($timeout, $q) ->
         constructor: (
             @elem = null
             { @accept, @uploadUrl, @awscredentials }
-            { @onUploadStart, @onProgress, @onLoad, @onError }
+            { @onBeforeUpload, @onUploadStart, @onProgress, @onLoad, @onError }
         ) ->
             @_createInput()
 
@@ -39,6 +39,9 @@ angular.module('cg.fileupload').factory 'cgFileUploadCtrl', ($timeout, $q) ->
             @_disabled = false
             @_createInput()
 
+
+        _setDestFolder: (destFolder) =>
+            @awscredentials.destFolder = destFolder
 
 
         _uploadS3: (file) ->
@@ -102,6 +105,12 @@ angular.module('cg.fileupload').factory 'cgFileUploadCtrl', ($timeout, $q) ->
                 filename: file.name
                 progress: 0
             )
+
+            @onBeforeUpload(
+                filename: file.name
+                setDestFolder: @_setDestFolder
+            )
+
             @_disabled = true
 
             func = if @awscredentials then '_uploadS3' else '_uploadWorker'
