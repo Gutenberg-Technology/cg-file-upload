@@ -13,6 +13,7 @@ angular.module('cg.fileupload', []);
     onupload="MyCtrl.onUpload($file)"
     ng-disabled="MyCtrl.disabled"
     awscredentials="MyCtrl.credentials"
+    onbeforeupload="MyCtrl.onBeforeUpload($upload_ctrl)"
 ></div>
  */
 angular.module('cg.fileupload').directive('cgFileUpload', function(cgFileUploadCtrl, $parse) {
@@ -23,11 +24,12 @@ angular.module('cg.fileupload').directive('cgFileUpload', function(cgFileUploadC
       progress: '=?',
       filename: '=?',
       onupload: '&',
+      onbeforeupload: '&',
       onerror: '&',
       uploadUrl: '@'
     },
     link: function(scope, elem, attrs) {
-      var _finally, _onError, _onLoad, _onProgress, _onUploadStart, ctrl, dropStyle, events, options;
+      var _finally, _onBeforeUpload, _onError, _onLoad, _onProgress, _onUploadStart, ctrl, dropStyle, events, options;
       elem = elem[0];
       _onUploadStart = function(arg) {
         var filename, progress, size;
@@ -49,6 +51,11 @@ angular.module('cg.fileupload').directive('cgFileUpload', function(cgFileUploadC
           });
         }
         return _finally();
+      };
+      _onBeforeUpload = function(ctrl) {
+        return typeof scope.onbeforeupload === "function" ? scope.onbeforeupload({
+          $upload_ctrl: ctrl
+        }) : void 0;
       };
       _onError = function(e) {
         if (typeof scope.onerror === "function") {
@@ -76,6 +83,7 @@ angular.module('cg.fileupload').directive('cgFileUpload', function(cgFileUploadC
         awscredentials: $parse(attrs.awscredentials)(scope)
       };
       events = {
+        onBeforeUpload: _onBeforeUpload,
         onUploadStart: _onUploadStart,
         onProgress: _onProgress,
         onLoad: _onLoad,
@@ -117,7 +125,8 @@ angular.module('cg.fileupload').factory('cgFileUploadCtrl', function($timeout, $
     function cgFileUploadCtrl(elem, arg, arg1) {
       this.elem = elem != null ? elem : null;
       this.accept = arg.accept, this.uploadUrl = arg.uploadUrl, this.awscredentials = arg.awscredentials;
-      this.onUploadStart = arg1.onUploadStart, this.onProgress = arg1.onProgress, this.onLoad = arg1.onLoad, this.onError = arg1.onError;
+      this.onBeforeUpload = arg1.onBeforeUpload, this.onUploadStart = arg1.onUploadStart, this.onProgress = arg1.onProgress, this.onLoad = arg1.onLoad, this.onError = arg1.onError;
+      this._setDestFolder = bind(this._setDestFolder, this);
       this._errorHandler = bind(this._errorHandler, this);
       this.start = bind(this.start, this);
       this._createInput();
@@ -178,6 +187,10 @@ angular.module('cg.fileupload').factory('cgFileUploadCtrl', function($timeout, $
       }
       this._disabled = false;
       return this._createInput();
+    };
+
+    cgFileUploadCtrl.prototype._setDestFolder = function(destFolder) {
+      return this.awscredentials.destFolder = destFolder;
     };
 
     cgFileUploadCtrl.prototype._uploadS3 = function(file) {
@@ -254,6 +267,10 @@ angular.module('cg.fileupload').factory('cgFileUploadCtrl', function($timeout, $
           progress: 0
         });
       }
+      this.onBeforeUpload({
+        filename: file.name,
+        setDestFolder: this._setDestFolder
+      });
       this._disabled = true;
       func = this.awscredentials ? '_uploadS3' : '_uploadWorker';
       return this[func](file).then((function(_this) {
