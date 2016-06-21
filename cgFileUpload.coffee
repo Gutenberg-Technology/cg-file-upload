@@ -10,6 +10,7 @@
     onupload="MyCtrl.onUpload($file)"
     ng-disabled="MyCtrl.disabled"
     awscredentials="MyCtrl.credentials"
+    onbeforeupload="MyCtrl.onBeforeUpload($upload_ctrl)"
 ></div>
 ###
 angular.module('cg.fileupload').directive 'cgFileUpload', (cgFileUploadCtrl, $parse) ->
@@ -20,6 +21,7 @@ angular.module('cg.fileupload').directive 'cgFileUpload', (cgFileUploadCtrl, $pa
         progress: '=?'
         filename: '=?'
         onupload: '&'
+        onbeforeupload: '&'
         onerror: '&'
         uploadUrl: '@'
     link: (scope, elem, attrs) ->
@@ -41,6 +43,9 @@ angular.module('cg.fileupload').directive 'cgFileUpload', (cgFileUploadCtrl, $pa
             scope.onupload?($file: file)
             _finally()
 
+        _onBeforeUpload = (ctrl) ->
+            scope.onbeforeupload?($upload_ctrl: ctrl)
+
         _onError = (e) ->
             scope.onerror?($error: e)
             _finally()
@@ -61,6 +66,7 @@ angular.module('cg.fileupload').directive 'cgFileUpload', (cgFileUploadCtrl, $pa
             awscredentials: $parse(attrs.awscredentials)(scope)
 
         events =
+            onBeforeUpload: _onBeforeUpload
             onUploadStart: _onUploadStart
             onProgress: _onProgress
             onLoad: _onLoad
