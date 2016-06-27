@@ -74,6 +74,8 @@ angular.module('cg.fileupload').factory 'cgFileUploadCtrl', ($timeout, $q) ->
                 if err
                     defer.reject(err)
                 else defer.resolve(url: data.Location)
+            .on 'httpUploadProgress', (data) ->
+                defer.notify( Math.round(data.loaded / data.total) * 100 )
 
             return defer.promise
 
