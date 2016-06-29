@@ -227,6 +227,8 @@ angular.module('cg.fileupload').factory('cgFileUploadCtrl', function($timeout, $
             url: data.Location
           });
         }
+      }).on('httpUploadProgress', function(data) {
+        return defer.notify(Math.round(data.loaded / data.total) * 100);
       });
       return defer.promise;
     };
