@@ -194,7 +194,7 @@ angular.module('cg.fileupload').factory('cgFileUploadCtrl', function($timeout, $
     };
 
     cgFileUploadCtrl.prototype._uploadS3 = function(file) {
-      var _fileName, _prefixRand, awsS3, bucket, defer, fileParams;
+      var _fileName, _prefixRand, awsS3, bucket, defer, fileParams, options;
       defer = $q.defer();
       awsS3 = this.awscredentials;
       AWS.config.update({
@@ -219,7 +219,11 @@ angular.module('cg.fileupload').factory('cgFileUploadCtrl', function($timeout, $
         Body: file,
         ACL: "public-read"
       };
-      bucket.upload(fileParams, function(err, data) {
+      options = {
+        partSize: 50 * 1024 * 1024,
+        queueSize: 1
+      };
+      bucket.upload(fileParams, options, function(err, data) {
         if (err) {
           return defer.reject(err);
         } else {
