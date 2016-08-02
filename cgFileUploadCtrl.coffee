@@ -70,7 +70,11 @@ angular.module('cg.fileupload').factory 'cgFileUploadCtrl', ($timeout, $q) ->
                 Body: file
                 ACL: "public-read"
 
-            bucket.upload fileParams, (err, data) ->
+            options =
+                partSize: 50 * 1024 * 1024
+                queueSize: 1
+
+            bucket.upload fileParams, options, (err, data) ->
                 if err
                     defer.reject(err)
                 else defer.resolve(url: data.Location)
