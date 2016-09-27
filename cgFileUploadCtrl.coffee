@@ -112,7 +112,7 @@ angular.module('cg.fileupload').factory 'cgFileUploadCtrl', ($timeout, $q) ->
                 progress: 0
             )
 
-            @onBeforeUpload(
+            @onBeforeUpload?(
                 filename: file.name
                 setDestFolder: @_setDestFolder
             )
