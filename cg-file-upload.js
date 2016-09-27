@@ -16,7 +16,18 @@ angular.module('cg.fileupload', []);
     onbeforeupload="MyCtrl.onBeforeUpload($upload_ctrl)"
 ></div>
  */
-angular.module('cg.fileupload').directive('cgFileUpload', function(cgFileUploadCtrl, $parse) {
+angular.module('cg.fileupload').provider('CgFileUpload', function() {
+  var _uploadUrl;
+  _uploadUrl = null;
+  this.setUploadUrl = function(uploadUrl) {
+    return _uploadUrl = uploadUrl;
+  };
+  this.$get = function() {
+    return {
+      uploadUrl: _uploadUrl
+    };
+  };
+}).directive('cgFileUpload', function(cgFileUploadCtrl, $parse, CgFileUpload) {
   return {
     restrict: 'A',
     scope: {
@@ -79,7 +90,7 @@ angular.module('cg.fileupload').directive('cgFileUpload', function(cgFileUploadC
       });
       options = {
         accept: scope.accept,
-        uploadUrl: scope.uploadUrl,
+        uploadUrl: scope.uploadUrl || CgFileUpload.uploadUrl,
         awscredentials: $parse(attrs.awscredentials)(scope)
       };
       events = {
