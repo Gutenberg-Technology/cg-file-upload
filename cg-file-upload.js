@@ -273,10 +273,12 @@ angular.module('cg.fileupload').factory('cgFileUploadCtrl', function($timeout, $
           progress: 0
         });
       }
-      this.onBeforeUpload({
-        filename: file.name,
-        setDestFolder: this._setDestFolder
-      });
+      if (typeof this.onBeforeUpload === "function") {
+        this.onBeforeUpload({
+          filename: file.name,
+          setDestFolder: this._setDestFolder
+        });
+      }
       this._disabled = true;
       func = this.awscredentials ? '_uploadS3' : '_uploadWorker';
       return this[func](file).then((function(_this) {
