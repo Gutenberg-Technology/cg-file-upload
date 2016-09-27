@@ -13,7 +13,18 @@
     onbeforeupload="MyCtrl.onBeforeUpload($upload_ctrl)"
 ></div>
 ###
-angular.module('cg.fileupload').directive 'cgFileUpload', (cgFileUploadCtrl, $parse) ->
+angular.module('cg.fileupload')
+.provider 'CgFileUpload', ->
+
+    _uploadUrl = null
+
+    @setUploadUrl = (uploadUrl) -> _uploadUrl = uploadUrl
+
+    @$get = ->
+        uploadUrl: _uploadUrl
+
+    return
+.directive 'cgFileUpload', (cgFileUploadCtrl, $parse, CgFileUpload) ->
 
     restrict: 'A'
     scope:
@@ -62,7 +73,7 @@ angular.module('cg.fileupload').directive 'cgFileUpload', (cgFileUploadCtrl, $pa
 
         options =
             accept: scope.accept
-            uploadUrl: scope.uploadUrl
+            uploadUrl: scope.uploadUrl or CgFileUpload.uploadUrl
             awscredentials: $parse(attrs.awscredentials)(scope)
 
         events =

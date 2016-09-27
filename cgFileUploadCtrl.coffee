@@ -1,4 +1,5 @@
-angular.module('cg.fileupload').factory 'cgFileUploadCtrl', ($timeout, $q) ->
+angular.module('cg.fileupload')
+.factory 'cgFileUploadCtrl', ($timeout, $q) ->
 
     class cgFileUploadCtrl
 
