@@ -184,7 +184,7 @@ angular.module('cg.fileupload').factory('cgFileUploadCtrl', function($timeout, $
           file = JSON.parse(file);
         }
         file.size = this._size;
-      } catch (undefined) {}
+      } catch (error) {}
       if (typeof this.onLoad === "function") {
         this.onLoad(file);
       }
