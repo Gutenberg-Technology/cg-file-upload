@@ -184,7 +184,8 @@ angular.module('cg.fileupload').factory('cgFileUploadCtrl', function($timeout, $
           file = JSON.parse(file);
         }
         file.size = this._size;
-      } catch (error) {}
+        file.type = this._mimetype;
+      } catch (undefined) {}
       if (typeof this.onLoad === "function") {
         this.onLoad(file);
       }
@@ -277,6 +278,7 @@ angular.module('cg.fileupload').factory('cgFileUploadCtrl', function($timeout, $
         return;
       }
       this._size = (file.size / Math.pow(1024, 2)).toFixed(2);
+      this._mimetype = file.type;
       if (typeof this.onUploadStart === "function") {
         this.onUploadStart({
           size: this._size,
