@@ -30,6 +30,7 @@ angular.module('cg.fileupload')
             try
                 file = JSON.parse(file) unless typeof file is 'object'
                 file.size = @_size
+                file.type = @_mimetype
 
             @onLoad?(file)
             @_disabled = false
@@ -107,6 +108,7 @@ angular.module('cg.fileupload')
         upload: (file) ->
             return unless file
             @_size = (file.size / Math.pow(1024, 2)).toFixed(2)
+            @_mimetype = file.type
             @onUploadStart?(
                 size: @_size
                 filename: file.name
