@@ -1,6 +1,6 @@
 {
   "name": "cg-file-upload",
-  "version": "1.0.15",
+  "version": "1.0.16",
   "description": "Angular directive and controller to manage file upload",
   "main": "cg-file-upload.js",
   "scripts": {
@@ -23,7 +23,7 @@
   },
   "homepage": "https://github.com/Gutenberg-Technology/cg-file-upload#readme",
   "dependencies": {
-    "coffee-script": "1.11.0",
+    "coffee-script": "1.11.1",
     "gulp": "3.9.1",
     "gulp-coffee": "2.3.2",
     "gulp-coffeelint": "0.6.0",

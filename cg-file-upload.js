@@ -185,7 +185,7 @@ angular.module('cg.fileupload').factory('cgFileUploadCtrl', function($timeout, $
         }
         file.size = this._size;
         file.type = this._mimetype;
-      } catch (undefined) {}
+      } catch (error) {}
       if (typeof this.onLoad === "function") {
         this.onLoad(file);
       }
@@ -253,8 +253,8 @@ angular.module('cg.fileupload').factory('cgFileUploadCtrl', function($timeout, $
       var data, defer, script, worker, workerUrl;
       defer = $q.defer();
       script = document.querySelectorAll('[src*="file-upload"]')[0];
-      workerUrl = script.src.replace('file-upload.js', 'file-upload-worker.js');
-      worker = new Worker(workerUrl);
+      workerUrl = new URL(script.src.replace('file-upload.js', 'file-upload-worker.js'));
+      worker = new Worker(workerUrl.pathname);
       worker.onmessage = function(e) {
         switch (e.data.message) {
           case 'load':
