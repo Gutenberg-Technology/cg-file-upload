@@ -26,11 +26,19 @@ angular.module('cg.fileupload')
             return if @_disabled
             $timeout => @_input.click()
 
-        _loadHandler: (file) ->
-            try
-                file = JSON.parse(file) unless typeof file is 'object'
-                file.size = @_size
-                file.type = @_mimetype
+        _loadHandler: (response) ->
+            # should not happend, just to be sure ;)
+            if typeof response is 'string'
+                response = JSON.parse(response)
+
+            # manage old response format
+            if response.file
+                file = response.file
+                file.url = file.directurl
+            else file = response
+
+            file.size = @_size
+            file.type = @_mimetype
 
             @onLoad?(file)
             @_disabled = false
