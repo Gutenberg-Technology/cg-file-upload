@@ -178,14 +178,19 @@ angular.module('cg.fileupload').factory('cgFileUploadCtrl', function($timeout, $
       })(this));
     };
 
-    cgFileUploadCtrl.prototype._loadHandler = function(file) {
-      try {
-        if (typeof file !== 'object') {
-          file = JSON.parse(file);
-        }
-        file.size = this._size;
-        file.type = this._mimetype;
-      } catch (error) {}
+    cgFileUploadCtrl.prototype._loadHandler = function(response) {
+      var file;
+      if (typeof response === 'string') {
+        response = JSON.parse(response);
+      }
+      if (response.file) {
+        file = response.file;
+        file.url = file.directurl;
+      } else {
+        file = response;
+      }
+      file.size = this._size;
+      file.type = this._mimetype;
       if (typeof this.onLoad === "function") {
         this.onLoad(file);
       }
