@@ -1,3 +1,67 @@
+# polyfill for IE/Edge (URL object)
+
+((global) ->
+
+    URLPolyfill = (url, baseURL) ->
+        if typeof url != 'string'
+            throw new TypeError('URL must be a string')
+        m = String(url).replace(/^\s+|\s+$/g, '').match(/^([^:\/?#]+:)?(?:\/\/(?:([^:@\/?#]*)(?::([^:@\/?#]*))?@)?(([^:\/?#]*)(?::(\d*))?))?([^?#]*)(\?[^#]*)?(#[\s\S]*)?/)
+        if !m
+            throw new RangeError('Invalid URL format')
+        protocol = m[1] or ''
+        username = m[2] or ''
+        password = m[3] or ''
+        host = m[4] or ''
+        hostname = m[5] or ''
+        port = m[6] or ''
+        pathname = m[7] or ''
+        search = m[8] or ''
+        hash = m[9] or ''
+        if baseURL != undefined
+            base = if baseURL instanceof URLPolyfill then baseURL else new URLPolyfill(baseURL)
+            flag = !protocol and !host and !username
+            if flag and !pathname and !search
+                search = base.search
+            if flag and pathname[0] != '/'
+                pathname = if pathname then (if (base.host or base.username) and !base.pathname then '/' else '') + base.pathname.slice(0, base.pathname.lastIndexOf('/') + 1) + pathname else base.pathname
+            # dot segments removal
+            output = []
+            pathname.replace(/^(\.\.?(\/|$))+/, '').replace(/\/(\.(\/|$))+/g, '/').replace(/\/\.\.$/, '/../').replace /\/?[^\/]*/g, (p) ->
+                if p == '/..'
+                    output.pop()
+                else
+                    output.push p
+                return
+            pathname = output.join('').replace(/^\//, if pathname[0] == '/' then '/' else '')
+            if flag
+                port = base.port
+                hostname = base.hostname
+                host = base.host
+                password = base.password
+                username = base.username
+            if !protocol
+                protocol = base.protocol
+        # convert URLs to use / always
+        pathname = pathname.replace(/\\/g, '/')
+        @origin = if host then protocol + (if protocol != '' or host != '' then '//' else '') + host else ''
+        @href = protocol + (if protocol and host or protocol == 'file:' then '//' else '') + (if username != '' then username + (if password != '' then ':' + password else '') + '@' else '') + host + pathname + search + hash
+        @protocol = protocol
+        @username = username
+        @password = password
+        @host = host
+        @hostname = hostname
+        @port = port
+        @pathname = pathname
+        @search = search
+        @hash = hash
+        return
+
+    global.URLPolyfill = URLPolyfill
+    return
+) if typeof self != 'undefined' then self else global
+
+# ---
+
 ###
 <div
     cg-file-upload

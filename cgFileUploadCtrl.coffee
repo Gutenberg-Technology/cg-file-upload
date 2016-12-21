@@ -97,6 +97,7 @@ angular.module('cg.fileupload')
         _uploadWorker: (file) ->
             defer = $q.defer()
             script = document.querySelectorAll('[src*="file-upload"]')[0]
+            URL = URLPolyfill
             workerUrl = new URL script.src.replace 'file-upload.js', 'file-upload-worker.js'
             worker = new Worker workerUrl.pathname
             worker.onmessage = (e) ->
