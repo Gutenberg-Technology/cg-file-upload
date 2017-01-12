@@ -35,6 +35,7 @@ angular.module('cg.fileupload')
         onbeforeupload: '&'
         onerror: '&'
         uploadUrl: '@'
+        ondragenter: '&'
     link: (scope, elem, attrs) ->
 
         elem = elem[0]
@@ -89,6 +90,7 @@ angular.module('cg.fileupload')
             dropStyle = 'dropping'
 
             elem.addEventListener 'dragenter', (e) ->
+                scope.ondragenter?()
                 e.preventDefault()
                 return true
 
