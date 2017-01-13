@@ -37,7 +37,8 @@ angular.module('cg.fileupload').provider('CgFileUpload', function() {
       onupload: '&',
       onbeforeupload: '&',
       onerror: '&',
-      uploadUrl: '@'
+      uploadUrl: '@',
+      ondragenter: '&'
     },
     link: function(scope, elem, attrs) {
       var _finally, _onBeforeUpload, _onError, _onLoad, _onProgress, _onUploadStart, ctrl, dropStyle, events, options;
@@ -104,6 +105,9 @@ angular.module('cg.fileupload').provider('CgFileUpload', function() {
       if (attrs.droppable === 'true') {
         dropStyle = 'dropping';
         elem.addEventListener('dragenter', function(e) {
+          if (typeof scope.ondragenter === "function") {
+            scope.ondragenter();
+          }
           e.preventDefault();
           return true;
         });
