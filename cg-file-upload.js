@@ -261,7 +261,7 @@ angular.module('cg.fileupload').factory('cgFileUploadCtrl', function($timeout, $
     cgFileUploadCtrl.prototype._uploadWorker = function(file) {
       var data, defer, script, worker, workerUrl;
       defer = $q.defer();
-      script = document.querySelectorAll('[src*="file-upload"]')[0];
+      script = document.querySelectorAll('[src*="cg-file-upload.js"]')[0];
       workerUrl = new URL(script.src.replace('file-upload.js', 'file-upload-worker.js'));
       worker = new Worker(workerUrl.pathname);
       worker.onmessage = function(e) {
