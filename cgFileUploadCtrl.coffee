@@ -49,12 +49,7 @@ angular.module('cg.fileupload')
             @_disabled = false
             @_createInput()
 
-
-        _setDestFolder: (destFolder) =>
-            @awscredentials.destFolder = destFolder
-
-
-        _uploadS3: (file, filename) ->
+        _uploadS3: ({ file, filename, destFolder }) ->
             defer = $q.defer()
             awsS3 = @awscredentials
 
@@ -71,7 +66,7 @@ angular.module('cg.fileupload')
                 params: Bucket: awsS3.bucket
             )
 
-            filename = "#{ awsS3.destFolder }/#{ filename }" if awsS3.destFolder
+            filename = "#{ destFolder }/#{ filename }" if destFolder
 
             fileParams =
                 Key: filename
@@ -92,8 +87,7 @@ angular.module('cg.fileupload')
 
             return defer.promise
 
-
-        _uploadWorker: (file, filename) ->
+        _uploadWorker: ({ file, filename }) ->
             defer = $q.defer()
             script = document.querySelectorAll('[src*="cg-file-upload.js"]')[0]
             workerUrl = new URL script.src.replace 'file-upload.js', 'file-upload-worker.js'
@@ -123,26 +117,30 @@ angular.module('cg.fileupload')
             return unless file
             @_size = (file.size / Math.pow(1024, 2)).toFixed(2)
             @_mimetype = file.type
+            _filename = @_normalizeName(file.name)
             @onUploadStart?(
                 size: @_size
-                filename: file.name
+                filename: _filename
                 progress: 0
             )
 
-            @onBeforeUpload?(
-                filename: file.name
-                setDestFolder: @_setDestFolder
-            )
+            _ctrl =
+                filename: _filename
+                setDestFolder: (destFolder) -> _ctrl.destFolder = destFolder
+                setFileName: (filename) -> _ctrl.filename = filename
+            @onBeforeUpload?(_ctrl)
 
             @_disabled = true
 
             func = if @awscredentials then '_uploadS3' else '_uploadWorker'
-            filename = @_normalizeName(file.name)
-            this[func](file, filename).then(
+            this[func](
+                file: file
+                filename: _ctrl.filename
+                destFolder: _ctrl.destFolder
+            ).then(
                 (data) => @_loadHandler(data) # success
                 (err) => @_errorHandler(err) # error
                 (data) => @onProgress?(data) # notify
             )
-
 
     return cgFileUploadCtrl
