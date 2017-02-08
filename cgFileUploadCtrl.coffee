@@ -5,7 +5,7 @@ angular.module('cg.fileupload')
 
         constructor: (
             @elem = null
-            { @accept, @uploadUrl, @awscredentials }
+            { @accept, @uploadUrl, @awscredentials, @disableNormalization }
             { @onBeforeUpload, @onUploadStart, @onProgress, @onLoad, @onError }
         ) ->
             @_createInput()
@@ -54,7 +54,7 @@ angular.module('cg.fileupload')
             @awscredentials.destFolder = destFolder
 
 
-        _uploadS3: (file) ->
+        _uploadS3: (file, filename) ->
             defer = $q.defer()
             awsS3 = @awscredentials
 
@@ -71,11 +71,10 @@ angular.module('cg.fileupload')
                 params: Bucket: awsS3.bucket
             )
 
-            _prefixRand = "#{ Math.floor(Math.random() * 10000) }-#{ Date.now() }_"
-            _fileName = if awsS3.destFolder then "#{ awsS3.destFolder }/#{ _prefixRand }#{ file.name }" else "#{ _prefixRand }#{ file.name }"
+            filename = "#{ awsS3.destFolder }/#{ filename }" if awsS3.destFolder
 
             fileParams =
-                Key: _fileName
+                Key: filename
                 ContentType: file.type
                 Body: file
                 ACL: "public-read"
@@ -94,7 +93,7 @@ angular.module('cg.fileupload')
             return defer.promise
 
 
-        _uploadWorker: (file) ->
+        _uploadWorker: (file, filename) ->
             defer = $q.defer()
             script = document.querySelectorAll('[src*="cg-file-upload.js"]')[0]
             workerUrl = new URL script.src.replace 'file-upload.js', 'file-upload-worker.js'
@@ -109,9 +108,16 @@ angular.module('cg.fileupload')
             data =
                 file: file
                 url: @uploadUrl
+                name: filename
             worker.postMessage data
 
             return defer.promise
+
+        _normalizeName: (name) ->
+            return name if @disableNormalization
+            name = name.replace /[^a-zA-Z-_.0-9]/g, '_'
+            _prefixRand = "#{ Math.floor(Math.random() * 10000) }-#{ Date.now() }"
+            return "#{ _prefixRand }-#{ name }"
 
         upload: (file) ->
             return unless file
@@ -131,7 +137,8 @@ angular.module('cg.fileupload')
             @_disabled = true
 
             func = if @awscredentials then '_uploadS3' else '_uploadWorker'
-            this[func](file).then(
+            filename = @_normalizeName(file.name)
+            this[func](file, filename).then(
                 (data) => @_loadHandler(data) # success
                 (err) => @_errorHandler(err) # error
                 (data) => @onProgress?(data) # notify

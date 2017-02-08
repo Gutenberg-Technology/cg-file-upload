@@ -13,13 +13,12 @@ uploadChunk = (blob, url, filename, chunk, chunks) ->
 @onmessage = (e) ->
     file = e.data.file
     url = e.data.url
+    name = e.data.name
     blobs = []
     bytes_per_chunk = 1024 * 1024 * 10 # 10MB
     start = 0
     end = bytes_per_chunk
     size = file.size
-    name = file.name.replace /[^a-zA-Z-_.0-9]/g, '_'
-    name = "#{ Date.now() }-#{ name }"
 
     while start < size
         blobs.push file.slice(start, end)

@@ -76,6 +76,7 @@ angular.module('cg.fileupload')
             accept: scope.accept
             uploadUrl: scope.uploadUrl or CgFileUpload.uploadUrl
             awscredentials: $parse(attrs.awscredentials)(scope)
+            disableNormalization: attrs.disableNormalization?
 
         events =
             onBeforeUpload: _onBeforeUpload
