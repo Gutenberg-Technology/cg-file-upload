@@ -92,7 +92,8 @@ angular.module('cg.fileupload').provider('CgFileUpload', function() {
       options = {
         accept: scope.accept,
         uploadUrl: scope.uploadUrl || CgFileUpload.uploadUrl,
-        awscredentials: $parse(attrs.awscredentials)(scope)
+        awscredentials: $parse(attrs.awscredentials)(scope),
+        disableNormalization: attrs.disableNormalization != null
       };
       events = {
         onBeforeUpload: _onBeforeUpload,
@@ -139,9 +140,8 @@ angular.module('cg.fileupload').factory('cgFileUploadCtrl', function($timeout, $
   cgFileUploadCtrl = (function() {
     function cgFileUploadCtrl(elem, arg, arg1) {
       this.elem = elem != null ? elem : null;
-      this.accept = arg.accept, this.uploadUrl = arg.uploadUrl, this.awscredentials = arg.awscredentials;
+      this.accept = arg.accept, this.uploadUrl = arg.uploadUrl, this.awscredentials = arg.awscredentials, this.disableNormalization = arg.disableNormalization;
       this.onBeforeUpload = arg1.onBeforeUpload, this.onUploadStart = arg1.onUploadStart, this.onProgress = arg1.onProgress, this.onLoad = arg1.onLoad, this.onError = arg1.onError;
-      this._setDestFolder = bind(this._setDestFolder, this);
       this._errorHandler = bind(this._errorHandler, this);
       this.start = bind(this.start, this);
       this._createInput();
@@ -210,12 +210,9 @@ angular.module('cg.fileupload').factory('cgFileUploadCtrl', function($timeout, $
       return this._createInput();
     };
 
-    cgFileUploadCtrl.prototype._setDestFolder = function(destFolder) {
-      return this.awscredentials.destFolder = destFolder;
-    };
-
-    cgFileUploadCtrl.prototype._uploadS3 = function(file) {
-      var _fileName, _prefixRand, awsS3, bucket, defer, fileParams, options;
+    cgFileUploadCtrl.prototype._uploadS3 = function(arg) {
+      var awsS3, bucket, defer, destFolder, file, fileParams, filename, options;
+      file = arg.file, filename = arg.filename, destFolder = arg.destFolder;
       defer = $q.defer();
       awsS3 = this.awscredentials;
       AWS.config.update({
@@ -232,10 +229,11 @@ angular.module('cg.fileupload').factory('cgFileUploadCtrl', function($timeout, $
           Bucket: awsS3.bucket
         }
       });
-      _prefixRand = (Math.floor(Math.random() * 10000)) + "-" + (Date.now()) + "_";
-      _fileName = awsS3.destFolder ? awsS3.destFolder + "/" + _prefixRand + file.name : "" + _prefixRand + file.name;
+      if (destFolder) {
+        filename = destFolder + "/" + filename;
+      }
       fileParams = {
-        Key: _fileName,
+        Key: filename,
         ContentType: file.type,
         Body: file,
         ACL: "public-read"
@@ -258,8 +256,9 @@ angular.module('cg.fileupload').factory('cgFileUploadCtrl', function($timeout, $
       return defer.promise;
     };
 
-    cgFileUploadCtrl.prototype._uploadWorker = function(file) {
-      var data, defer, script, worker, workerUrl;
+    cgFileUploadCtrl.prototype._uploadWorker = function(arg) {
+      var data, defer, file, filename, script, worker, workerUrl;
+      file = arg.file, filename = arg.filename;
       defer = $q.defer();
       script = document.querySelectorAll('[src*="cg-file-upload.js"]')[0];
       workerUrl = new URL(script.src.replace('file-upload.js', 'file-upload-worker.js'));
@@ -275,35 +274,57 @@ angular.module('cg.fileupload').factory('cgFileUploadCtrl', function($timeout, $
       worker.onerror = defer.reject;
       data = {
         file: file,
-        url: this.uploadUrl
+        url: this.uploadUrl,
+        name: filename
       };
       worker.postMessage(data);
       return defer.promise;
     };
 
+    cgFileUploadCtrl.prototype._normalizeName = function(name) {
+      var _prefixRand;
+      if (this.disableNormalization) {
+        return name;
+      }
+      name = name.replace(/[^a-zA-Z-_.0-9]/g, '_');
+      _prefixRand = (Math.floor(Math.random() * 10000)) + "-" + (Date.now());
+      return _prefixRand + "-" + name;
+    };
+
     cgFileUploadCtrl.prototype.upload = function(file) {
-      var func;
+      var _ctrl, _filename, func;
       if (!file) {
         return;
       }
       this._size = (file.size / Math.pow(1024, 2)).toFixed(2);
       this._mimetype = file.type;
+      _filename = this._normalizeName(file.name);
       if (typeof this.onUploadStart === "function") {
         this.onUploadStart({
           size: this._size,
-          filename: file.name,
+          filename: _filename,
           progress: 0
         });
       }
+      _ctrl = {
+        filename: _filename,
+        setDestFolder: function(destFolder) {
+          return _ctrl.destFolder = destFolder;
+        },
+        setFileName: function(filename) {
+          return _ctrl.filename = filename;
+        }
+      };
       if (typeof this.onBeforeUpload === "function") {
-        this.onBeforeUpload({
-          filename: file.name,
-          setDestFolder: this._setDestFolder
-        });
+        this.onBeforeUpload(_ctrl);
       }
       this._disabled = true;
       func = this.awscredentials ? '_uploadS3' : '_uploadWorker';
-      return this[func](file).then((function(_this) {
+      return this[func]({
+        file: file,
+        filename: _ctrl.filename,
+        destFolder: _ctrl.destFolder
+      }).then((function(_this) {
         return function(data) {
           return _this._loadHandler(data);
         };

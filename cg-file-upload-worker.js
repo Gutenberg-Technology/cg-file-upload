@@ -20,13 +20,12 @@ this.onmessage = function(e) {
   var blob, blobs, bytes_per_chunk, data, end, file, i, j, len, name, response, size, start, url;
   file = e.data.file;
   url = e.data.url;
+  name = e.data.name;
   blobs = [];
   bytes_per_chunk = 1024 * 1024 * 10;
   start = 0;
   end = bytes_per_chunk;
   size = file.size;
-  name = file.name.replace(/[^a-zA-Z-_.0-9]/g, '_');
-  name = (Date.now()) + "-" + name;
   while (start < size) {
     blobs.push(file.slice(start, end));
     start = end;
