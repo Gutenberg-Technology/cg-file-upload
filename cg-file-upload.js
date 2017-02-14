@@ -219,6 +219,10 @@ angular.module('cg.fileupload').factory('cgFileUploadCtrl', function($timeout, $
         signatureVersion: 'v4',
         region: awsS3.region
       });
+      if (awsS3.endpoint) {
+        AWS.config.endpoint = new AWS.Endpoint(awsS3.endpoint);
+        AWS.config.s3ForcePathStyle = true;
+      }
       AWS.config.credentials = new AWS.Credentials({
         accessKeyId: awsS3.accessKeyId,
         sessionToken: awsS3.sessionToken,
