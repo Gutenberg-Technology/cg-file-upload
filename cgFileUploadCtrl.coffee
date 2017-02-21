@@ -77,16 +77,20 @@ angular.module('cg.fileupload')
                 Body: file
                 ACL: "public-read"
 
+            # For multipart upload to work:
+            # Etag header needs to be exposed in the bucket
+            # Keep the partSize less than 30mb
             options =
-                partSize: 50 * 1024 * 1024
+                partSize: 10 * 1024 * 1024
                 queueSize: 1
 
-            bucket.upload fileParams, options, (err, data) ->
+            bucket.upload fileParams, options
+            .on 'httpUploadProgress', (data) ->
+                defer.notify Math.round (data.loaded / data.total) * 100
+            .send (err, data) ->
                 if err
                     defer.reject(err)
                 else defer.resolve(url: data.Location)
-            .on 'httpUploadProgress', (data) ->
-                defer.notify( Math.round(data.loaded / data.total) * 100 )
 
             return defer.promise
 
