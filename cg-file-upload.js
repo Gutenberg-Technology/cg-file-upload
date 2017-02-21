@@ -243,10 +243,12 @@ angular.module('cg.fileupload').factory('cgFileUploadCtrl', function($timeout, $
         ACL: "public-read"
       };
       options = {
-        partSize: 50 * 1024 * 1024,
+        partSize: 10 * 1024 * 1024,
         queueSize: 1
       };
-      bucket.upload(fileParams, options, function(err, data) {
+      bucket.upload(fileParams, options).on('httpUploadProgress', function(data) {
+        return defer.notify(Math.round((data.loaded / data.total) * 100));
+      }).send(function(err, data) {
         if (err) {
           return defer.reject(err);
         } else {
@@ -254,8 +256,6 @@ angular.module('cg.fileupload').factory('cgFileUploadCtrl', function($timeout, $
             url: data.Location
           });
         }
-      }).on('httpUploadProgress', function(data) {
-        return defer.notify(Math.round(data.loaded / data.total) * 100);
       });
       return defer.promise;
     };
