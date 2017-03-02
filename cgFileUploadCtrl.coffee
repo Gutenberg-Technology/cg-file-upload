@@ -124,6 +124,7 @@ angular.module('cg.fileupload')
             return unless file
             @_size = (file.size / Math.pow(1024, 2)).toFixed(2)
             @_mimetype = file.type
+            _originalFilename = file.name
             _filename = @_normalizeName(file.name)
             @onUploadStart?(
                 size: @_size
@@ -133,6 +134,7 @@ angular.module('cg.fileupload')
 
             _ctrl =
                 filename: _filename
+                originalFilename: _originalFilename
                 setDestFolder: (destFolder) -> _ctrl.destFolder = destFolder
                 setFileName: (filename) -> _ctrl.filename = filename
             @onBeforeUpload?(_ctrl)
