@@ -296,12 +296,13 @@ angular.module('cg.fileupload').factory('cgFileUploadCtrl', function($timeout, $
     };
 
     cgFileUploadCtrl.prototype.upload = function(file) {
-      var _ctrl, _filename, func;
+      var _ctrl, _filename, _originalFilename, func;
       if (!file) {
         return;
       }
       this._size = (file.size / Math.pow(1024, 2)).toFixed(2);
       this._mimetype = file.type;
+      _originalFilename = file.name;
       _filename = this._normalizeName(file.name);
       if (typeof this.onUploadStart === "function") {
         this.onUploadStart({
@@ -312,6 +313,7 @@ angular.module('cg.fileupload').factory('cgFileUploadCtrl', function($timeout, $
       }
       _ctrl = {
         filename: _filename,
+        originalFilename: _originalFilename,
         setDestFolder: function(destFolder) {
           return _ctrl.destFolder = destFolder;
         },
