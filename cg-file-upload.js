@@ -175,11 +175,7 @@ angular.module('cg.fileupload').factory('cgFileUploadCtrl', function($timeout, $
       if (this._disabled) {
         return;
       }
-      return $timeout((function(_this) {
-        return function() {
-          return _this._input.click();
-        };
-      })(this));
+      this._input.click();
     };
 
     cgFileUploadCtrl.prototype._loadHandler = function(response) {
