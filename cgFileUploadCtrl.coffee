@@ -24,7 +24,8 @@ angular.module('cg.fileupload')
 
         start: =>
             return if @_disabled
-            $timeout => @_input.click()
+            @_input.click()
+            return
 
         _loadHandler: (response) ->
             # should not happend, just to be sure ;)
