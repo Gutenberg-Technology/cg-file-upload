@@ -1,9 +1,9 @@
 var uploadChunk;
 
-uploadChunk = function(blob, url, filename, chunk, chunks) {
+uploadChunk = function(blob, url, method, filename, chunk, chunks) {
   var formData, xhr;
   xhr = new XMLHttpRequest;
-  xhr.open('POST', url, false);
+  xhr.open(method, url, false);
   xhr.onerror = function() {
     throw new Error('error while uploading');
   };
@@ -17,9 +17,10 @@ uploadChunk = function(blob, url, filename, chunk, chunks) {
 };
 
 this.onmessage = function(e) {
-  var blob, blobs, bytes_per_chunk, data, end, file, i, j, len, name, response, size, start, url;
+  var blob, blobs, bytes_per_chunk, data, end, file, i, j, len, method, name, response, size, start, url;
   file = e.data.file;
   url = e.data.url;
+  method = e.data.method || 'POST';
   name = e.data.name;
   blobs = [];
   bytes_per_chunk = 1024 * 1024 * 10;
@@ -33,7 +34,7 @@ this.onmessage = function(e) {
   }
   for (i = j = 0, len = blobs.length; j < len; i = ++j) {
     blob = blobs[i];
-    response = uploadChunk(blob, url, name, i, blobs.length);
+    response = uploadChunk(blob, url, method, name, i, blobs.length);
     data = {
       message: 'progress',
       body: ((i + 1) * 100 / blobs.length).toFixed(0)

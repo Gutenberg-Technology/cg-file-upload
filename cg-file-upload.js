@@ -5,6 +5,7 @@ angular.module('cg.fileupload', []);
 <div
     cg-file-upload
     upload-url="http://path/to/upload/endpoint"
+    upload-method="PUT"
     accept="*.xml,image/*"
     progress="MyCtrl.progress"
     filename="MyCtrl.filename"
@@ -17,14 +18,18 @@ angular.module('cg.fileupload', []);
 ></div>
  */
 angular.module('cg.fileupload').provider('CgFileUpload', function() {
-  var _uploadUrl;
-  _uploadUrl = null;
+  var _uploadMethod, _uploadUrl;
+  _uploadUrl = _uploadMethod = null;
   this.setUploadUrl = function(uploadUrl) {
     return _uploadUrl = uploadUrl;
   };
+  this.setUploadMethod = function(uploadMethod) {
+    return _uploadMethod = uploadMethod;
+  };
   this.$get = function() {
     return {
-      uploadUrl: _uploadUrl
+      uploadUrl: _uploadUrl,
+      uploadMethod: _uploadMethod
     };
   };
 }).directive('cgFileUpload', function(cgFileUploadCtrl, $parse, CgFileUpload) {
@@ -38,6 +43,7 @@ angular.module('cg.fileupload').provider('CgFileUpload', function() {
       onbeforeupload: '&',
       onerror: '&',
       uploadUrl: '@',
+      uploadMethod: '@',
       ondragenter: '&'
     },
     link: function(scope, elem, attrs) {
@@ -92,6 +98,7 @@ angular.module('cg.fileupload').provider('CgFileUpload', function() {
       options = {
         accept: scope.accept,
         uploadUrl: scope.uploadUrl || CgFileUpload.uploadUrl,
+        uploadMethod: scope.uploadMethod || CgFileUpload.uploadMethod,
         awscredentials: $parse(attrs.awscredentials)(scope),
         disableNormalization: attrs.disableNormalization != null
       };
@@ -140,7 +147,7 @@ angular.module('cg.fileupload').factory('cgFileUploadCtrl', function($timeout, $
   cgFileUploadCtrl = (function() {
     function cgFileUploadCtrl(elem, arg, arg1) {
       this.elem = elem != null ? elem : null;
-      this.accept = arg.accept, this.uploadUrl = arg.uploadUrl, this.awscredentials = arg.awscredentials, this.disableNormalization = arg.disableNormalization;
+      this.accept = arg.accept, this.uploadUrl = arg.uploadUrl, this.uploadMethod = arg.uploadMethod, this.awscredentials = arg.awscredentials, this.disableNormalization = arg.disableNormalization;
       this.onBeforeUpload = arg1.onBeforeUpload, this.onUploadStart = arg1.onUploadStart, this.onProgress = arg1.onProgress, this.onLoad = arg1.onLoad, this.onError = arg1.onError;
       this._errorHandler = bind(this._errorHandler, this);
       this.start = bind(this.start, this);
@@ -180,8 +187,15 @@ angular.module('cg.fileupload').factory('cgFileUploadCtrl', function($timeout, $
 
     cgFileUploadCtrl.prototype._loadHandler = function(response) {
       var file;
+      if (response == null) {
+        response = {};
+      }
       if (typeof response === 'string') {
-        response = JSON.parse(response);
+        if (response.length) {
+          response = JSON.parse(response);
+        } else {
+          response = {};
+        }
       }
       if (response.file) {
         file = response.file;
@@ -275,6 +289,7 @@ angular.module('cg.fileupload').factory('cgFileUploadCtrl', function($timeout, $
       data = {
         file: file,
         url: this.uploadUrl,
+        method: this.uploadMethod,
         name: filename
       };
       worker.postMessage(data);
