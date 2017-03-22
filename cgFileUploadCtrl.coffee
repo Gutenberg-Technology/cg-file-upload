@@ -123,6 +123,20 @@ angular.module('cg.fileupload')
             name = name.replace /[^a-zA-Z-_.0-9]/g, '_'
             _prefixRand = "#{ Math.floor(Math.random() * 10000) }-#{ Date.now() }"
             return "#{ _prefixRand }-#{ name }"
+        
+        _upload: ({ file, filename, destFolder }) ->
+            @_disabled = true
+
+            func = if @awscredentials then '_uploadS3' else '_uploadWorker'
+            this[func](
+                file: file
+                filename: filename
+                destFolder: destFolder
+            ).then(
+                (data) => @_loadHandler(data) # success
+                (err) => @_errorHandler(err) # error
+                (data) => @onProgress?(data) # notify
+            )
 
         upload: (file) ->
             return unless file
@@ -141,19 +155,19 @@ angular.module('cg.fileupload')
                 originalFilename: _originalFilename
                 setDestFolder: (destFolder) -> _ctrl.destFolder = destFolder
                 setFileName: (filename) -> _ctrl.filename = filename
-            @onBeforeUpload?(_ctrl)
 
-            @_disabled = true
+            _doUpload = =>
+                @_upload(
+                    file: file
+                    filename: _ctrl.filename
+                    destFolder: _ctrl.destFolder
+                )
 
-            func = if @awscredentials then '_uploadS3' else '_uploadWorker'
-            this[func](
-                file: file
-                filename: _ctrl.filename
-                destFolder: _ctrl.destFolder
-            ).then(
-                (data) => @_loadHandler(data) # success
-                (err) => @_errorHandler(err) # error
-                (data) => @onProgress?(data) # notify
-            )
+            if @onBeforeUpload
+                promise = @onBeforeUpload(_ctrl)
+                if promise.then?
+                    promise.then(_doUpload)
+                else _doUpload()
+            else _doUpload()
 
     return cgFileUploadCtrl
