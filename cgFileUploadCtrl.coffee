@@ -27,10 +27,12 @@ angular.module('cg.fileupload')
             @_input.click()
             return
 
-        _loadHandler: (response) ->
+        _loadHandler: (response = {}) ->
             # should not happend, just to be sure ;)
             if typeof response is 'string'
-                response = JSON.parse(response)
+                if response.length
+                    response = JSON.parse(response)
+                else response = {}
 
             # manage old response format
             if response.file
