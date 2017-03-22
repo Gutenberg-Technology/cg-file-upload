@@ -1,6 +1,6 @@
-uploadChunk = (blob, url, filename, chunk, chunks) ->
+uploadChunk = (blob, url, method, filename, chunk, chunks) ->
     xhr = new XMLHttpRequest
-    xhr.open 'POST', url, false
+    xhr.open method, url, false
     xhr.onerror = -> throw new Error 'error while uploading'
     formData = new FormData
     formData.append 'name', filename
@@ -13,6 +13,7 @@ uploadChunk = (blob, url, filename, chunk, chunks) ->
 @onmessage = (e) ->
     file = e.data.file
     url = e.data.url
+    method = e.data.method or 'POST'
     name = e.data.name
     blobs = []
     bytes_per_chunk = 1024 * 1024 * 10 # 10MB
@@ -26,7 +27,7 @@ uploadChunk = (blob, url, filename, chunk, chunks) ->
         end = start + bytes_per_chunk
 
     for blob, i in blobs
-        response = uploadChunk(blob, url, name, i, blobs.length)
+        response = uploadChunk(blob, url, method, name, i, blobs.length)
         data =
             message: 'progress'
             body: ((i + 1) * 100 / blobs.length).toFixed(0)
