@@ -2,6 +2,7 @@
 <div
     cg-file-upload
     upload-url="http://path/to/upload/endpoint"
+    upload-method="PUT"
     accept="*.xml,image/*"
     progress="MyCtrl.progress"
     filename="MyCtrl.filename"
@@ -16,12 +17,14 @@
 angular.module('cg.fileupload')
 .provider 'CgFileUpload', ->
 
-    _uploadUrl = null
+    _uploadUrl = _uploadMethod = null
 
     @setUploadUrl = (uploadUrl) -> _uploadUrl = uploadUrl
+    @setUploadMethod = (uploadMethod) -> _uploadMethod = uploadMethod
 
     @$get = ->
         uploadUrl: _uploadUrl
+        uploadMethod: _uploadMethod
 
     return
 .directive 'cgFileUpload', (cgFileUploadCtrl, $parse, CgFileUpload) ->
@@ -35,6 +38,7 @@ angular.module('cg.fileupload')
         onbeforeupload: '&'
         onerror: '&'
         uploadUrl: '@'
+        uploadMethod: '@'
         ondragenter: '&'
     link: (scope, elem, attrs) ->
 
@@ -75,6 +79,7 @@ angular.module('cg.fileupload')
         options =
             accept: scope.accept
             uploadUrl: scope.uploadUrl or CgFileUpload.uploadUrl
+            uploadMethod: scope.uploadMethod or CgFileUpload.uploadMethod
             awscredentials: $parse(attrs.awscredentials)(scope)
             disableNormalization: attrs.disableNormalization?
 
