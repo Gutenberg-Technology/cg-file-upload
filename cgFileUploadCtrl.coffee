@@ -5,7 +5,7 @@ angular.module('cg.fileupload')
 
         constructor: (
             @elem = null
-            { @accept, @uploadUrl, @awscredentials, @disableNormalization }
+            { @accept, @uploadUrl, @uploadMethod, @awscredentials, @disableNormalization }
             { @onBeforeUpload, @onUploadStart, @onProgress, @onLoad, @onError }
         ) ->
             @_createInput()
@@ -110,6 +110,7 @@ angular.module('cg.fileupload')
             data =
                 file: file
                 url: @uploadUrl
+                method: @uploadMethod
                 name: filename
             worker.postMessage data
 
