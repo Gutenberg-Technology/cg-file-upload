@@ -306,8 +306,32 @@ angular.module('cg.fileupload').factory('cgFileUploadCtrl', function($timeout, $
       return _prefixRand + "-" + name;
     };
 
+    cgFileUploadCtrl.prototype._upload = function(arg) {
+      var destFolder, file, filename, func;
+      file = arg.file, filename = arg.filename, destFolder = arg.destFolder;
+      this._disabled = true;
+      func = this.awscredentials ? '_uploadS3' : '_uploadWorker';
+      return this[func]({
+        file: file,
+        filename: filename,
+        destFolder: destFolder
+      }).then((function(_this) {
+        return function(data) {
+          return _this._loadHandler(data);
+        };
+      })(this), (function(_this) {
+        return function(err) {
+          return _this._errorHandler(err);
+        };
+      })(this), (function(_this) {
+        return function(data) {
+          return typeof _this.onProgress === "function" ? _this.onProgress(data) : void 0;
+        };
+      })(this));
+    };
+
     cgFileUploadCtrl.prototype.upload = function(file) {
-      var _ctrl, _filename, _originalFilename, func;
+      var _ctrl, _doUpload, _filename, _originalFilename, promise;
       if (!file) {
         return;
       }
@@ -332,28 +356,25 @@ angular.module('cg.fileupload').factory('cgFileUploadCtrl', function($timeout, $
           return _ctrl.filename = filename;
         }
       };
-      if (typeof this.onBeforeUpload === "function") {
-        this.onBeforeUpload(_ctrl);
+      _doUpload = (function(_this) {
+        return function() {
+          return _this._upload({
+            file: file,
+            filename: _ctrl.filename,
+            destFolder: _ctrl.destFolder
+          });
+        };
+      })(this);
+      if (this.onBeforeUpload) {
+        promise = this.onBeforeUpload(_ctrl);
+        if (promise.then != null) {
+          return promise.then(_doUpload);
+        } else {
+          return _doUpload();
+        }
+      } else {
+        return _doUpload();
       }
-      this._disabled = true;
-      func = this.awscredentials ? '_uploadS3' : '_uploadWorker';
-      return this[func]({
-        file: file,
-        filename: _ctrl.filename,
-        destFolder: _ctrl.destFolder
-      }).then((function(_this) {
-        return function(data) {
-          return _this._loadHandler(data);
-        };
-      })(this), (function(_this) {
-        return function(err) {
-          return _this._errorHandler(err);
-        };
-      })(this), (function(_this) {
-        return function(data) {
-          return typeof _this.onProgress === "function" ? _this.onProgress(data) : void 0;
-        };
-      })(this));
     };
 
     return cgFileUploadCtrl;
