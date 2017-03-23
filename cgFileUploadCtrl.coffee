@@ -97,7 +97,7 @@ angular.module('cg.fileupload')
 
             return defer.promise
 
-        _uploadWorker: ({ file, filename }) ->
+        _uploadWorker: ({ file, filename, uploadUrl, uploadMethod }) ->
             defer = $q.defer()
             script = document.querySelectorAll('[src*="cg-file-upload.js"]')[0]
             workerUrl = new URL script.src.replace 'file-upload.js', 'file-upload-worker.js'
@@ -111,8 +111,8 @@ angular.module('cg.fileupload')
 
             data =
                 file: file
-                url: @uploadUrl
-                method: @uploadMethod
+                url: uploadUrl
+                method: uploadMethod
                 name: filename
             worker.postMessage data
 
@@ -124,15 +124,17 @@ angular.module('cg.fileupload')
             _prefixRand = "#{ Math.floor(Math.random() * 10000) }-#{ Date.now() }"
             return "#{ _prefixRand }-#{ name }"
         
-        _upload: ({ file, filename, destFolder }) ->
+        _upload: ({ file, filename, destFolder, uploadUrl, uploadMethod }) ->
             @_disabled = true
 
             func = if @awscredentials then '_uploadS3' else '_uploadWorker'
-            this[func](
-                file: file
-                filename: filename
-                destFolder: destFolder
-            ).then(
+            this[func]({
+                file
+                filename
+                destFolder
+                uploadUrl
+                uploadMethod
+            }).then(
                 (data) => @_loadHandler(data) # success
                 (err) => @_errorHandler(err) # error
                 (data) => @onProgress?(data) # notify
@@ -155,12 +157,16 @@ angular.module('cg.fileupload')
                 originalFilename: _originalFilename
                 setDestFolder: (destFolder) -> _ctrl.destFolder = destFolder
                 setFileName: (filename) -> _ctrl.filename = filename
+                setUploadUrl: (uploadUrl) -> _ctrl.uploadUrl = uploadUrl
+                setUploadMethod: (uploadMethod) -> _ctrl.uploadMethod = uploadMethod
 
             _doUpload = =>
                 @_upload(
                     file: file
                     filename: _ctrl.filename
                     destFolder: _ctrl.destFolder
+                    uploadUrl: _ctrl.uploadUrl or @uploadUrl
+                    uploadMethod: _ctrl.uploadMethod or @uploadMethod
                 )
 
             if @onBeforeUpload
