@@ -123,7 +123,7 @@ angular.module('cg.fileupload')
             name = name.replace /[^a-zA-Z-_.0-9]/g, '_'
             _prefixRand = "#{ Math.floor(Math.random() * 10000) }-#{ Date.now() }"
             return "#{ _prefixRand }-#{ name }"
-        
+
         _upload: ({ file, filename, destFolder, uploadUrl, uploadMethod }) ->
             @_disabled = true
 
@@ -155,6 +155,7 @@ angular.module('cg.fileupload')
             _ctrl =
                 filename: _filename
                 originalFilename: _originalFilename
+                file: file
                 setDestFolder: (destFolder) -> _ctrl.destFolder = destFolder
                 setFileName: (filename) -> _ctrl.filename = filename
                 setUploadUrl: (uploadUrl) -> _ctrl.uploadUrl = uploadUrl
@@ -171,7 +172,7 @@ angular.module('cg.fileupload')
 
             if @onBeforeUpload
                 promise = @onBeforeUpload(_ctrl)
-                if promise.then?
+                if promise?.then?
                     promise.then(_doUpload)
                 else _doUpload()
             else _doUpload()
