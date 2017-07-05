@@ -97,7 +97,7 @@ angular.module('cg.fileupload')
 
             return defer.promise
 
-        _uploadWorker: ({ file, filename, uploadUrl, uploadMethod }) ->
+        _uploadWorker: ({ file, filename, uploadUrl, uploadMethod, destFolder }) ->
             defer = $q.defer()
             script = document.querySelectorAll('[src*="cg-file-upload.js"]')[0]
             workerUrl = new URL script.src.replace 'file-upload.js', 'file-upload-worker.js'
@@ -108,6 +108,8 @@ angular.module('cg.fileupload')
                     when 'progress' then defer.notify(e.data.body)
 
             worker.onerror = defer.reject
+
+            filename = "#{ destFolder }/#{ filename }" if destFolder
 
             data =
                 file: file
