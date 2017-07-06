@@ -55,7 +55,7 @@ angular.module('cg.fileupload')
 
         _uploadS3: ({ file, filename, destFolder, signedUrl, uploadMethod, uploadUrl }) ->
             if signedUrl
-                $http.put(uploadUrl, file, headers: 'Content-Type': file.type)
+                return $http.put(uploadUrl, file, headers: 'Content-Type': file.type)
             else
                 defer = $q.defer()
                 awsS3 = @awscredentials
