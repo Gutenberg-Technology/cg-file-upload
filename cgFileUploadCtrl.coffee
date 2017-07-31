@@ -1,5 +1,5 @@
 angular.module('cg.fileupload')
-.factory 'cgFileUploadCtrl', ($timeout, $q) ->
+.factory 'cgFileUploadCtrl', ($timeout, $q, $http) ->
 
     class cgFileUploadCtrl
 
@@ -52,7 +52,14 @@ angular.module('cg.fileupload')
             @_disabled = false
             @_createInput()
 
-        _uploadS3: ({ file, filename, destFolder }) ->
+
+        _uploadS3: ({ file, filename, destFolder, signedUrl, uploadMethod, uploadUrl }) ->
+            return $http.put(
+                uploadUrl
+                file
+                headers: 'Content-Type': file.type
+            ) if signedUrl
+
             defer = $q.defer()
             awsS3 = @awscredentials
 
@@ -97,7 +104,7 @@ angular.module('cg.fileupload')
 
             return defer.promise
 
-        _uploadWorker: ({ file, filename, uploadUrl, uploadMethod }) ->
+        _uploadWorker: ({ file, filename, uploadUrl, uploadMethod, destFolder }) ->
             defer = $q.defer()
             script = document.querySelectorAll('[src*="cg-file-upload.js"]')[0]
             workerUrl = new URL script.src.replace 'file-upload.js', 'file-upload-worker.js'
@@ -108,6 +115,8 @@ angular.module('cg.fileupload')
                     when 'progress' then defer.notify(e.data.body)
 
             worker.onerror = defer.reject
+
+            filename = "#{ destFolder }/#{ filename }" if destFolder
 
             data =
                 file: file
@@ -123,17 +132,18 @@ angular.module('cg.fileupload')
             name = name.replace /[^a-zA-Z-_.0-9]/g, '_'
             _prefixRand = "#{ Math.floor(Math.random() * 10000) }-#{ Date.now() }"
             return "#{ _prefixRand }-#{ name }"
-        
-        _upload: ({ file, filename, destFolder, uploadUrl, uploadMethod }) ->
+
+        _upload: ({ file, filename, destFolder, uploadUrl, uploadMethod, signedUrl }) ->
             @_disabled = true
 
-            func = if @awscredentials then '_uploadS3' else '_uploadWorker'
+            func = if @awscredentials or signedUrl then '_uploadS3' else '_uploadWorker'
             this[func]({
                 file
                 filename
                 destFolder
                 uploadUrl
                 uploadMethod
+                signedUrl
             }).then(
                 (data) => @_loadHandler(data) # success
                 (err) => @_errorHandler(err) # error
@@ -155,10 +165,13 @@ angular.module('cg.fileupload')
             _ctrl =
                 filename: _filename
                 originalFilename: _originalFilename
+                file: file
+                signedUrl: false
                 setDestFolder: (destFolder) -> _ctrl.destFolder = destFolder
                 setFileName: (filename) -> _ctrl.filename = filename
                 setUploadUrl: (uploadUrl) -> _ctrl.uploadUrl = uploadUrl
                 setUploadMethod: (uploadMethod) -> _ctrl.uploadMethod = uploadMethod
+                isSignedUrl: (signedUrl) -> _ctrl.signedUrl = signedUrl
 
             _doUpload = =>
                 @_upload(
@@ -167,11 +180,12 @@ angular.module('cg.fileupload')
                     destFolder: _ctrl.destFolder
                     uploadUrl: _ctrl.uploadUrl or @uploadUrl
                     uploadMethod: _ctrl.uploadMethod or @uploadMethod
+                    signedUrl: _ctrl.signedUrl
                 )
 
             if @onBeforeUpload
                 promise = @onBeforeUpload(_ctrl)
-                if promise.then?
+                if promise?.then?
                     promise.then(_doUpload)
                 else _doUpload()
             else _doUpload()
