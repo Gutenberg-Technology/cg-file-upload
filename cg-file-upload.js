@@ -142,7 +142,7 @@ angular.module('cg.fileupload').provider('CgFileUpload', function() {
 
 var bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
 
-angular.module('cg.fileupload').factory('cgFileUploadCtrl', function($timeout, $q) {
+angular.module('cg.fileupload').factory('cgFileUploadCtrl', function($timeout, $q, $http) {
   var cgFileUploadCtrl;
   cgFileUploadCtrl = (function() {
     function cgFileUploadCtrl(elem, arg, arg1) {
@@ -221,8 +221,15 @@ angular.module('cg.fileupload').factory('cgFileUploadCtrl', function($timeout, $
     };
 
     cgFileUploadCtrl.prototype._uploadS3 = function(arg) {
-      var awsS3, bucket, defer, destFolder, file, fileParams, filename, options;
-      file = arg.file, filename = arg.filename, destFolder = arg.destFolder;
+      var awsS3, bucket, defer, destFolder, file, fileParams, filename, options, signedUrl, uploadMethod, uploadUrl;
+      file = arg.file, filename = arg.filename, destFolder = arg.destFolder, signedUrl = arg.signedUrl, uploadMethod = arg.uploadMethod, uploadUrl = arg.uploadUrl;
+      if (signedUrl) {
+        return $http.put(uploadUrl, file, {
+          headers: {
+            'Content-Type': file.type
+          }
+        });
+      }
       defer = $q.defer();
       awsS3 = this.awscredentials;
       AWS.config.update({
@@ -271,8 +278,8 @@ angular.module('cg.fileupload').factory('cgFileUploadCtrl', function($timeout, $
     };
 
     cgFileUploadCtrl.prototype._uploadWorker = function(arg) {
-      var data, defer, file, filename, script, uploadMethod, uploadUrl, worker, workerUrl;
-      file = arg.file, filename = arg.filename, uploadUrl = arg.uploadUrl, uploadMethod = arg.uploadMethod;
+      var data, defer, destFolder, file, filename, script, uploadMethod, uploadUrl, worker, workerUrl;
+      file = arg.file, filename = arg.filename, uploadUrl = arg.uploadUrl, uploadMethod = arg.uploadMethod, destFolder = arg.destFolder;
       defer = $q.defer();
       script = document.querySelectorAll('[src*="cg-file-upload.js"]')[0];
       workerUrl = new URL(script.src.replace('file-upload.js', 'file-upload-worker.js'));
@@ -286,6 +293,9 @@ angular.module('cg.fileupload').factory('cgFileUploadCtrl', function($timeout, $
         }
       };
       worker.onerror = defer.reject;
+      if (destFolder) {
+        filename = destFolder + "/" + filename;
+      }
       data = {
         file: file,
         url: uploadUrl,
@@ -307,16 +317,17 @@ angular.module('cg.fileupload').factory('cgFileUploadCtrl', function($timeout, $
     };
 
     cgFileUploadCtrl.prototype._upload = function(arg) {
-      var destFolder, file, filename, func, uploadMethod, uploadUrl;
-      file = arg.file, filename = arg.filename, destFolder = arg.destFolder, uploadUrl = arg.uploadUrl, uploadMethod = arg.uploadMethod;
+      var destFolder, file, filename, func, signedUrl, uploadMethod, uploadUrl;
+      file = arg.file, filename = arg.filename, destFolder = arg.destFolder, uploadUrl = arg.uploadUrl, uploadMethod = arg.uploadMethod, signedUrl = arg.signedUrl;
       this._disabled = true;
-      func = this.awscredentials ? '_uploadS3' : '_uploadWorker';
+      func = this.awscredentials || signedUrl ? '_uploadS3' : '_uploadWorker';
       return this[func]({
         file: file,
         filename: filename,
         destFolder: destFolder,
         uploadUrl: uploadUrl,
-        uploadMethod: uploadMethod
+        uploadMethod: uploadMethod,
+        signedUrl: signedUrl
       }).then((function(_this) {
         return function(data) {
           return _this._loadHandler(data);
@@ -351,6 +362,8 @@ angular.module('cg.fileupload').factory('cgFileUploadCtrl', function($timeout, $
       _ctrl = {
         filename: _filename,
         originalFilename: _originalFilename,
+        file: file,
+        signedUrl: false,
         setDestFolder: function(destFolder) {
           return _ctrl.destFolder = destFolder;
         },
@@ -362,6 +375,9 @@ angular.module('cg.fileupload').factory('cgFileUploadCtrl', function($timeout, $
         },
         setUploadMethod: function(uploadMethod) {
           return _ctrl.uploadMethod = uploadMethod;
+        },
+        isSignedUrl: function(signedUrl) {
+          return _ctrl.signedUrl = signedUrl;
         }
       };
       _doUpload = (function(_this) {
@@ -371,13 +387,14 @@ angular.module('cg.fileupload').factory('cgFileUploadCtrl', function($timeout, $
             filename: _ctrl.filename,
             destFolder: _ctrl.destFolder,
             uploadUrl: _ctrl.uploadUrl || _this.uploadUrl,
-            uploadMethod: _ctrl.uploadMethod || _this.uploadMethod
+            uploadMethod: _ctrl.uploadMethod || _this.uploadMethod,
+            signedUrl: _ctrl.signedUrl
           });
         };
       })(this);
       if (this.onBeforeUpload) {
         promise = this.onBeforeUpload(_ctrl);
-        if (promise.then != null) {
+        if ((promise != null ? promise.then : void 0) != null) {
           return promise.then(_doUpload);
         } else {
           return _doUpload();
