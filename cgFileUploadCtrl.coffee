@@ -54,75 +54,78 @@ angular.module('cg.fileupload')
 
 
         _uploadS3: ({ file, filename, destFolder, signedUrl, uploadMethod, uploadUrl }) ->
-            if signedUrl
-                return $http.put(uploadUrl, file, headers: 'Content-Type': file.type)
-            else
-                defer = $q.defer()
-                awsS3 = @awscredentials
+            return $http.put(
+                uploadUrl
+                file
+                headers: 'Content-Type': file.type
+            ) if signedUrl
 
-                AWS.config.update(
-                    signatureVersion: 'v4'
-                    region: awsS3.region
-                )
-                if awsS3.endpoint
-                    AWS.config.endpoint = new AWS.Endpoint(awsS3.endpoint)
-                    AWS.config.s3ForcePathStyle = true
-                AWS.config.credentials = new AWS.Credentials(
-                    accessKeyId: awsS3.accessKeyId
-                    sessionToken: awsS3.sessionToken
-                    secretAccessKey: awsS3.secretAccessKey
-                )
-                bucket = new AWS.S3(
-                    params: Bucket: awsS3.bucket
-                )
+            defer = $q.defer()
+            awsS3 = @awscredentials
 
-                filename = "#{ destFolder }/#{ filename }" if destFolder
+            AWS.config.update(
+                signatureVersion: 'v4'
+                region: awsS3.region
+            )
+            if awsS3.endpoint
+                AWS.config.endpoint = new AWS.Endpoint(awsS3.endpoint)
+                AWS.config.s3ForcePathStyle = true
+            AWS.config.credentials = new AWS.Credentials(
+                accessKeyId: awsS3.accessKeyId
+                sessionToken: awsS3.sessionToken
+                secretAccessKey: awsS3.secretAccessKey
+            )
+            bucket = new AWS.S3(
+                params: Bucket: awsS3.bucket
+            )
 
-                fileParams =
-                    Key: filename
-                    ContentType: file.type
-                    Body: file
-                    ACL: "public-read"
+            filename = "#{ destFolder }/#{ filename }" if destFolder
 
-                # For multipart upload to work:
-                # Etag header needs to be exposed in the bucket
-                # Keep the partSize less than 30mb
-                options =
-                    partSize: 10 * 1024 * 1024
-                    queueSize: 1
+            fileParams =
+                Key: filename
+                ContentType: file.type
+                Body: file
+                ACL: "public-read"
 
-                bucket.upload fileParams, options
-                .on 'httpUploadProgress', (data) ->
-                    defer.notify Math.round (data.loaded / data.total) * 100
-                .send (err, data) ->
-                    if err
-                        defer.reject(err)
-                    else defer.resolve(url: data.Location)
+            # For multipart upload to work:
+            # Etag header needs to be exposed in the bucket
+            # Keep the partSize less than 30mb
+            options =
+                partSize: 10 * 1024 * 1024
+                queueSize: 1
 
-                return defer.promise
+            bucket.upload fileParams, options
+            .on 'httpUploadProgress', (data) ->
+                defer.notify Math.round (data.loaded / data.total) * 100
+            .send (err, data) ->
+                if err
+                    defer.reject(err)
+                else defer.resolve(url: data.Location)
 
-            _uploadWorker: ({ file, filename, uploadUrl, uploadMethod, destFolder }) ->
-                defer = $q.defer()
-                script = document.querySelectorAll('[src*="cg-file-upload.js"]')[0]
-                workerUrl = new URL script.src.replace 'file-upload.js', 'file-upload-worker.js'
-                worker = new Worker workerUrl.pathname
-                worker.onmessage = (e) ->
-                    switch e.data.message
-                        when 'load' then defer.resolve(e.data.body)
-                        when 'progress' then defer.notify(e.data.body)
+            return defer.promise
 
-                worker.onerror = defer.reject
+        _uploadWorker: ({ file, filename, uploadUrl, uploadMethod, destFolder }) ->
+            defer = $q.defer()
+            script = document.querySelectorAll('[src*="cg-file-upload.js"]')[0]
+            workerUrl = new URL script.src.replace 'file-upload.js', 'file-upload-worker.js'
+            worker = new Worker workerUrl.pathname
+            worker.onmessage = (e) ->
+                switch e.data.message
+                    when 'load' then defer.resolve(e.data.body)
+                    when 'progress' then defer.notify(e.data.body)
 
-                filename = "#{ destFolder }/#{ filename }" if destFolder
+            worker.onerror = defer.reject
 
-                data =
-                    file: file
-                    url: uploadUrl
-                    method: uploadMethod
-                    name: filename
-                worker.postMessage data
+            filename = "#{ destFolder }/#{ filename }" if destFolder
 
-                return defer.promise
+            data =
+                file: file
+                url: uploadUrl
+                method: uploadMethod
+                name: filename
+            worker.postMessage data
+
+            return defer.promise
 
         _normalizeName: (name) ->
             return name if @disableNormalization
