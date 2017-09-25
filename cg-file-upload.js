@@ -220,15 +220,31 @@ angular.module('cg.fileupload').factory('cgFileUploadCtrl', function($timeout, $
       return this._createInput();
     };
 
+    cgFileUploadCtrl.prototype._uploadS3BySignedUrl = function(file, uploadUrl) {
+      var defer;
+      defer = $q.defer();
+      $http.put(uploadUrl, file, {
+        headers: {
+          'Content-Type': file.type
+        },
+        uploadEventHandlers: {
+          progress: function(data) {
+            return defer.notify(Math.round((data.loaded / data.total) * 100));
+          }
+        }
+      }).then(function(data) {
+        return defer.resolve(data);
+      }, function(err) {
+        return defer.reject(err);
+      });
+      return defer.promise;
+    };
+
     cgFileUploadCtrl.prototype._uploadS3 = function(arg) {
       var awsS3, bucket, defer, destFolder, file, fileParams, filename, options, signedUrl, uploadMethod, uploadUrl;
       file = arg.file, filename = arg.filename, destFolder = arg.destFolder, signedUrl = arg.signedUrl, uploadMethod = arg.uploadMethod, uploadUrl = arg.uploadUrl;
       if (signedUrl) {
-        return $http.put(uploadUrl, file, {
-          headers: {
-            'Content-Type': file.type
-          }
-        });
+        return this._uploadS3BySignedUrl(file, uploadUrl);
       }
       defer = $q.defer();
       awsS3 = this.awscredentials;
