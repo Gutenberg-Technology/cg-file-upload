@@ -52,13 +52,27 @@ angular.module('cg.fileupload')
             @_disabled = false
             @_createInput()
 
+        _uploadS3BySignedUrl: (file, uploadUrl) ->
+            defer = $q.defer()
 
-        _uploadS3: ({ file, filename, destFolder, signedUrl, uploadMethod, uploadUrl }) ->
-            return $http.put(
+            $http.put(
                 uploadUrl
                 file
                 headers: 'Content-Type': file.type
-            ) if signedUrl
+                uploadEventHandlers: {
+                    progress: (data) ->
+                        defer.notify Math.round (data.loaded / data.total) * 100
+                }
+            ).then(
+                (data) -> defer.resolve(data) # success
+                (err) -> defer.reject(err) # error
+            )
+
+            return defer.promise
+
+
+        _uploadS3: ({ file, filename, destFolder, signedUrl, uploadMethod, uploadUrl }) ->
+            return @_uploadS3BySignedUrl file, uploadUrl if signedUrl
 
             defer = $q.defer()
             awsS3 = @awscredentials
