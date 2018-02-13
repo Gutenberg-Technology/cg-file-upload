@@ -43,6 +43,15 @@ angular.module('cg.fileupload')
     link: (scope, elem, attrs) ->
 
         elem = elem[0]
+        isUploading = false
+        fileQueue = []
+
+        _onNextUpload = (listFiles) ->
+            if !isUploading
+                if listFiles
+                    fileQueue = listFiles
+                if fileQueue.length > 0
+                    ctrl.upload(fileQueue.shift())
 
         _onUploadStart = ({ size, filename, progress }) ->
             scope.size = size
@@ -60,6 +69,7 @@ angular.module('cg.fileupload')
             _finally()
 
         _onBeforeUpload = (ctrl) ->
+            isUploading = true
             scope.onbeforeupload?($upload_ctrl: ctrl)
 
         _onError = (e) ->
@@ -67,8 +77,10 @@ angular.module('cg.fileupload')
             _finally()
 
         _finally = ->
+            isUploading = false
             attrs.$set 'disabled', false
             scope.progress = 100
+            _onNextUpload()
             scope.$evalAsync()
 
         attrs.$observe 'disabled', (disabled) ->
@@ -89,6 +101,7 @@ angular.module('cg.fileupload')
             onProgress: _onProgress
             onLoad: _onLoad
             onError: _onError
+            onNextUpload: _onNextUpload
 
         ctrl = new cgFileUploadCtrl(elem, options, events)
 
@@ -112,6 +125,11 @@ angular.module('cg.fileupload')
             elem.addEventListener 'drop', (e) ->
                 e.preventDefault()
                 e.stopPropagation()
-                elem.classList.remove dropStyle
-                ctrl.upload(e.dataTransfer.files[0])
+                # elem.classList.remove dropStyle
+                files = e.dataTransfer.files
+                if files.length > 0
+                    Object.keys(files).forEach (key) =>
+                        fileQueue.push files[key]
+                _onNextUpload()
+                
                 return false
