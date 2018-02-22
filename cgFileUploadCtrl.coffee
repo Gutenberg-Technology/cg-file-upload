@@ -7,7 +7,7 @@ angular.module('cg.fileupload')
             @elem = null
             { @accept, @uploadUrl, @uploadMethod, @awscredentials, @disableNormalization }
             { @onNextUpload, @onBeforeUpload, @onUploadStart, @onProgress, @onLoad, @onError }
-        ) -> 
+        ) ->
             @_createInput()
 
         _tempArray = []
@@ -15,7 +15,7 @@ angular.module('cg.fileupload')
             @_input?.parentElement?.removeChild @_input
             @_input = document.createElement 'input'
             @_input.type = 'file'
-            @_input.setAttribute('multiple','')
+            @_input.setAttribute 'multiple', ''
             @_input.style.display = 'none'
             @_input.accept = @accept if @accept
             @_input.addEventListener 'change', =>
@@ -171,7 +171,7 @@ angular.module('cg.fileupload')
             )
 
         upload: (file) ->
-            return unless file 
+            return unless file
             @_size = (file.size / Math.pow(1024, 2)).toFixed(2)
             @_mimetype = file.type
             _originalFilename = file.name

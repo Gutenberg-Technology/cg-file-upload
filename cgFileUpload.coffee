@@ -40,6 +40,7 @@ angular.module('cg.fileupload')
         uploadUrl: '@'
         uploadMethod: '@'
         ondragenter: '&'
+        mainlist: '=?'
     link: (scope, elem, attrs) ->
 
         elem = elem[0]
@@ -47,7 +48,9 @@ angular.module('cg.fileupload')
         fileQueue = []
 
         _onNextUpload = (listFiles) ->
-            if !isUploading
+            if not scope.mainlist
+                scope.mainlist = Object.assign [], listFiles
+            if not isUploading
                 if listFiles
                     fileQueue = listFiles
                 if fileQueue.length > 0
@@ -128,7 +131,7 @@ angular.module('cg.fileupload')
                 # elem.classList.remove dropStyle
                 files = e.dataTransfer.files
                 if files.length > 0
-                    Object.keys(files).forEach (key) =>
+                    Object.keys(files).forEach (key) ->
                         fileQueue.push files[key]
                 _onNextUpload()
                 
