@@ -133,6 +133,6 @@ angular.module('cg.fileupload')
                 if files.length > 0
                     Object.keys(files).forEach (key) ->
                         fileQueue.push files[key]
-                _onNextUpload()
+                _onNextUpload(fileQueue)
                 
                 return false
