@@ -44,11 +44,27 @@ angular.module('cg.fileupload').provider('CgFileUpload', function() {
       onerror: '&',
       uploadUrl: '@',
       uploadMethod: '@',
-      ondragenter: '&'
+      ondragenter: '&',
+      mainlist: '=?'
     },
     link: function(scope, elem, attrs) {
-      var _finally, _onBeforeUpload, _onError, _onLoad, _onProgress, _onUploadStart, ctrl, dropStyle, events, options;
+      var _finally, _onBeforeUpload, _onError, _onLoad, _onNextUpload, _onProgress, _onUploadStart, ctrl, dropStyle, events, fileQueue, isUploading, options;
       elem = elem[0];
+      isUploading = false;
+      fileQueue = [];
+      _onNextUpload = function(listFiles) {
+        if (!scope.mainlist) {
+          scope.mainlist = Object.assign([], listFiles);
+        }
+        if (!isUploading) {
+          if (listFiles) {
+            fileQueue = listFiles;
+          }
+          if (fileQueue.length > 0) {
+            return ctrl.upload(fileQueue.shift());
+          }
+        }
+      };
       _onUploadStart = function(arg) {
         var filename, progress, size;
         size = arg.size, filename = arg.filename, progress = arg.progress;
@@ -71,6 +87,7 @@ angular.module('cg.fileupload').provider('CgFileUpload', function() {
         return _finally();
       };
       _onBeforeUpload = function(ctrl) {
+        isUploading = true;
         return typeof scope.onbeforeupload === "function" ? scope.onbeforeupload({
           $upload_ctrl: ctrl
         }) : void 0;
@@ -84,8 +101,10 @@ angular.module('cg.fileupload').provider('CgFileUpload', function() {
         return _finally();
       };
       _finally = function() {
+        isUploading = false;
         attrs.$set('disabled', false);
         scope.progress = 100;
+        _onNextUpload();
         return scope.$evalAsync();
       };
       attrs.$observe('disabled', function(disabled) {
@@ -107,7 +126,8 @@ angular.module('cg.fileupload').provider('CgFileUpload', function() {
         onUploadStart: _onUploadStart,
         onProgress: _onProgress,
         onLoad: _onLoad,
-        onError: _onError
+        onError: _onError,
+        onNextUpload: _onNextUpload
       };
       ctrl = new cgFileUploadCtrl(elem, options, events);
       if (attrs.droppable === 'true') {
@@ -129,10 +149,16 @@ angular.module('cg.fileupload').provider('CgFileUpload', function() {
           return false;
         });
         return elem.addEventListener('drop', function(e) {
+          var files;
           e.preventDefault();
           e.stopPropagation();
-          elem.classList.remove(dropStyle);
-          ctrl.upload(e.dataTransfer.files[0]);
+          files = e.dataTransfer.files;
+          if (files.length > 0) {
+            Object.keys(files).forEach(function(key) {
+              return fileQueue.push(files[key]);
+            });
+          }
+          _onNextUpload(fileQueue);
           return false;
         });
       }
@@ -145,33 +171,45 @@ var bind = function(fn, me){ return function(){ return fn.apply(me, arguments); 
 angular.module('cg.fileupload').factory('cgFileUploadCtrl', function($timeout, $q, $http) {
   var cgFileUploadCtrl;
   cgFileUploadCtrl = (function() {
+    var _tempArray;
+
     function cgFileUploadCtrl(elem, arg, arg1) {
       this.elem = elem != null ? elem : null;
       this.accept = arg.accept, this.uploadUrl = arg.uploadUrl, this.uploadMethod = arg.uploadMethod, this.awscredentials = arg.awscredentials, this.disableNormalization = arg.disableNormalization;
-      this.onBeforeUpload = arg1.onBeforeUpload, this.onUploadStart = arg1.onUploadStart, this.onProgress = arg1.onProgress, this.onLoad = arg1.onLoad, this.onError = arg1.onError;
+      this.onNextUpload = arg1.onNextUpload, this.onBeforeUpload = arg1.onBeforeUpload, this.onUploadStart = arg1.onUploadStart, this.onProgress = arg1.onProgress, this.onLoad = arg1.onLoad, this.onError = arg1.onError;
       this._errorHandler = bind(this._errorHandler, this);
       this.start = bind(this.start, this);
       this._createInput();
     }
 
+    _tempArray = [];
+
     cgFileUploadCtrl.prototype._createInput = function() {
-      var ref;
+      var ref, ref1, ref2;
       if ((ref = this._input) != null) {
-        ref.parentElement.removeChild(this._input);
+        if ((ref1 = ref.parentElement) != null) {
+          ref1.removeChild(this._input);
+        }
       }
       this._input = document.createElement('input');
       this._input.type = 'file';
+      this._input.setAttribute('multiple', '');
       this._input.style.display = 'none';
       if (this.accept) {
         this._input.accept = this.accept;
       }
       this._input.addEventListener('change', (function(_this) {
         return function() {
-          return _this.upload(_this._input.files[0]);
+          Object.keys(_this._input.files).forEach(function(key) {
+            return _tempArray.push(_this._input.files[key]);
+          });
+          return _this.onNextUpload(_tempArray);
         };
       })(this));
       if (this.elem) {
-        this.elem.parentElement.appendChild(this._input);
+        if ((ref2 = this.elem.parentElement) != null) {
+          ref2.appendChild(this._input);
+        }
         return this.elem.addEventListener('click', this.start);
       } else {
         return document.body.appendChild(this._input);
