@@ -6,19 +6,25 @@ angular.module('cg.fileupload')
         constructor: (
             @elem = null
             { @accept, @uploadUrl, @uploadMethod, @awscredentials, @disableNormalization }
-            { @onBeforeUpload, @onUploadStart, @onProgress, @onLoad, @onError }
+            { @onNextUpload, @onBeforeUpload, @onUploadStart, @onProgress, @onLoad, @onError }
         ) ->
             @_createInput()
 
+        _tempArray = []
         _createInput: ->
-            @_input?.parentElement.removeChild @_input
+            @_input?.parentElement?.removeChild @_input
             @_input = document.createElement 'input'
             @_input.type = 'file'
+            @_input.setAttribute 'multiple', ''
             @_input.style.display = 'none'
             @_input.accept = @accept if @accept
-            @_input.addEventListener 'change', => @upload @_input.files[0]
+            @_input.addEventListener 'change', =>
+                Object.keys(@_input.files).forEach (key) =>
+                    _tempArray.push @_input.files[key]
+                @onNextUpload(_tempArray)
+                    # @upload @_input.files[key]
             if @elem
-                @elem.parentElement.appendChild @_input
+                @elem.parentElement?.appendChild @_input
                 @elem.addEventListener 'click', @start
             else document.body.appendChild @_input
 
@@ -203,5 +209,5 @@ angular.module('cg.fileupload')
                     promise.then(_doUpload)
                 else _doUpload()
             else _doUpload()
-
+    
     return cgFileUploadCtrl
