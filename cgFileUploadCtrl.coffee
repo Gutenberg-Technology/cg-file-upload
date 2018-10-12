@@ -58,13 +58,15 @@ angular.module('cg.fileupload')
             @_disabled = false
             @_createInput()
 
-        _uploadS3BySignedUrl: (file, uploadUrl) ->
+        _uploadS3BySignedUrl: (file, uploadUrl, cacheControl) ->
             defer = $q.defer()
 
             $http.put(
                 uploadUrl
                 file
-                headers: 'Content-Type': file.type
+                headers:
+                    'Content-Type': file.type
+                    'Cache-Control': cacheControl
                 uploadEventHandlers: {
                     progress: (data) ->
                         defer.notify Math.round (data.loaded / data.total) * 100
@@ -77,8 +79,8 @@ angular.module('cg.fileupload')
             return defer.promise
 
 
-        _uploadS3: ({ file, filename, destFolder, signedUrl, uploadMethod, uploadUrl }) ->
-            return @_uploadS3BySignedUrl file, uploadUrl if signedUrl
+        _uploadS3: ({ file, filename, destFolder, signedUrl, uploadMethod, uploadUrl, cacheControl }) ->
+            return @_uploadS3BySignedUrl file, uploadUrl, cacheControl if signedUrl
 
             defer = $q.defer()
             awsS3 = @awscredentials
@@ -104,6 +106,7 @@ angular.module('cg.fileupload')
             fileParams =
                 Key: filename
                 ContentType: file.type
+                CacheControl: cacheControl
                 Body: file
                 ACL: "public-read"
 
@@ -153,7 +156,7 @@ angular.module('cg.fileupload')
             _prefixRand = "#{ Math.floor(Math.random() * 10000) }-#{ Date.now() }"
             return "#{ _prefixRand }-#{ name }"
 
-        _upload: ({ file, filename, destFolder, uploadUrl, uploadMethod, signedUrl }) ->
+        _upload: ({ file, filename, destFolder, uploadUrl, uploadMethod, signedUrl, cacheControl }) ->
             @_disabled = true
 
             func = if @awscredentials or signedUrl then '_uploadS3' else '_uploadWorker'
@@ -164,6 +167,7 @@ angular.module('cg.fileupload')
                 uploadUrl
                 uploadMethod
                 signedUrl
+                cacheControl
             }).then(
                 (data) => @_loadHandler(data) # success
                 (err) => @_errorHandler(err) # error
@@ -192,6 +196,7 @@ angular.module('cg.fileupload')
                 setUploadUrl: (uploadUrl) -> _ctrl.uploadUrl = uploadUrl
                 setUploadMethod: (uploadMethod) -> _ctrl.uploadMethod = uploadMethod
                 isSignedUrl: (signedUrl) -> _ctrl.signedUrl = signedUrl
+                setCacheControl: (cacheControl) -> _ctrl.cacheControl = cacheControl
 
             _doUpload = =>
                 @_upload(
@@ -201,6 +206,7 @@ angular.module('cg.fileupload')
                     uploadUrl: _ctrl.uploadUrl or @uploadUrl
                     uploadMethod: _ctrl.uploadMethod or @uploadMethod
                     signedUrl: _ctrl.signedUrl
+                    cacheControl: _ctrl.cacheControl or 'no-cache'
                 )
 
             if @onBeforeUpload
