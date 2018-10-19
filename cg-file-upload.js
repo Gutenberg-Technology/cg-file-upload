@@ -258,12 +258,13 @@ angular.module('cg.fileupload').factory('cgFileUploadCtrl', function($timeout, $
       return this._createInput();
     };
 
-    cgFileUploadCtrl.prototype._uploadS3BySignedUrl = function(file, uploadUrl) {
+    cgFileUploadCtrl.prototype._uploadS3BySignedUrl = function(file, uploadUrl, cacheControl) {
       var defer;
       defer = $q.defer();
       $http.put(uploadUrl, file, {
         headers: {
-          'Content-Type': file.type
+          'Content-Type': file.type,
+          'Cache-Control': cacheControl
         },
         uploadEventHandlers: {
           progress: function(data) {
@@ -279,10 +280,10 @@ angular.module('cg.fileupload').factory('cgFileUploadCtrl', function($timeout, $
     };
 
     cgFileUploadCtrl.prototype._uploadS3 = function(arg) {
-      var awsS3, bucket, defer, destFolder, file, fileParams, filename, options, signedUrl, uploadMethod, uploadUrl;
-      file = arg.file, filename = arg.filename, destFolder = arg.destFolder, signedUrl = arg.signedUrl, uploadMethod = arg.uploadMethod, uploadUrl = arg.uploadUrl;
+      var awsS3, bucket, cacheControl, defer, destFolder, file, fileParams, filename, options, signedUrl, uploadMethod, uploadUrl;
+      file = arg.file, filename = arg.filename, destFolder = arg.destFolder, signedUrl = arg.signedUrl, uploadMethod = arg.uploadMethod, uploadUrl = arg.uploadUrl, cacheControl = arg.cacheControl;
       if (signedUrl) {
-        return this._uploadS3BySignedUrl(file, uploadUrl);
+        return this._uploadS3BySignedUrl(file, uploadUrl, cacheControl);
       }
       defer = $q.defer();
       awsS3 = this.awscredentials;
@@ -310,6 +311,7 @@ angular.module('cg.fileupload').factory('cgFileUploadCtrl', function($timeout, $
       fileParams = {
         Key: filename,
         ContentType: file.type,
+        CacheControl: cacheControl,
         Body: file,
         ACL: "public-read"
       };
@@ -371,8 +373,8 @@ angular.module('cg.fileupload').factory('cgFileUploadCtrl', function($timeout, $
     };
 
     cgFileUploadCtrl.prototype._upload = function(arg) {
-      var destFolder, file, filename, func, signedUrl, uploadMethod, uploadUrl;
-      file = arg.file, filename = arg.filename, destFolder = arg.destFolder, uploadUrl = arg.uploadUrl, uploadMethod = arg.uploadMethod, signedUrl = arg.signedUrl;
+      var cacheControl, destFolder, file, filename, func, signedUrl, uploadMethod, uploadUrl;
+      file = arg.file, filename = arg.filename, destFolder = arg.destFolder, uploadUrl = arg.uploadUrl, uploadMethod = arg.uploadMethod, signedUrl = arg.signedUrl, cacheControl = arg.cacheControl;
       this._disabled = true;
       func = this.awscredentials || signedUrl ? '_uploadS3' : '_uploadWorker';
       return this[func]({
@@ -381,7 +383,8 @@ angular.module('cg.fileupload').factory('cgFileUploadCtrl', function($timeout, $
         destFolder: destFolder,
         uploadUrl: uploadUrl,
         uploadMethod: uploadMethod,
-        signedUrl: signedUrl
+        signedUrl: signedUrl,
+        cacheControl: cacheControl
       }).then((function(_this) {
         return function(data) {
           return _this._loadHandler(data);
@@ -432,6 +435,9 @@ angular.module('cg.fileupload').factory('cgFileUploadCtrl', function($timeout, $
         },
         isSignedUrl: function(signedUrl) {
           return _ctrl.signedUrl = signedUrl;
+        },
+        setCacheControl: function(cacheControl) {
+          return _ctrl.cacheControl = cacheControl;
         }
       };
       _doUpload = (function(_this) {
@@ -442,7 +448,8 @@ angular.module('cg.fileupload').factory('cgFileUploadCtrl', function($timeout, $
             destFolder: _ctrl.destFolder,
             uploadUrl: _ctrl.uploadUrl || _this.uploadUrl,
             uploadMethod: _ctrl.uploadMethod || _this.uploadMethod,
-            signedUrl: _ctrl.signedUrl
+            signedUrl: _ctrl.signedUrl,
+            cacheControl: _ctrl.cacheControl || 'no-cache'
           });
         };
       })(this);
