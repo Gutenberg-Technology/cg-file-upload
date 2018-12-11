@@ -30,7 +30,7 @@ this.onmessage = function(e) {
   while (start < size) {
     blobs.push(file.slice(start, end));
     start = end;
-    end = start + bytes_per_chunk;
+    end = start += bytes_per_chunk;
   }
   for (i = j = 0, len = blobs.length; j < len; i = ++j) {
     blob = blobs[i];

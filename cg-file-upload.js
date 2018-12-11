@@ -408,7 +408,7 @@ angular.module('cg.fileupload').factory('cgFileUploadCtrl', function($timeout, $
       this._size = (file.size / Math.pow(1024, 2)).toFixed(2);
       this._mimetype = file.type;
       _originalFilename = file.name;
-      _filename = this._normalizeName(file.name);
+      _filename = file.name;
       if (typeof this.onUploadStart === "function") {
         this.onUploadStart({
           size: this._size,
