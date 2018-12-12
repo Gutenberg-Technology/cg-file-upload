@@ -24,7 +24,7 @@ uploadChunk = (blob, url, method, filename, chunk, chunks) ->
     while start < size
         blobs.push file.slice(start, end)
         start = end
-        end = start + bytes_per_chunk
+        end = start += bytes_per_chunk
 
     for blob, i in blobs
         response = uploadChunk(blob, url, method, name, i, blobs.length)
