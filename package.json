@@ -5,7 +5,6 @@
   "main": "cg-file-upload.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "postinstall": "ln -sf ../../node_modules/angular-precommit/index.js .git/hooks/commit-msg",
     "release": "gulp && node node_modules/.bin/angular-release"
   },
   "repository": {
@@ -24,17 +23,29 @@
     "url": "https://github.com/Gutenberg-Technology/cg-file-upload/issues"
   },
   "homepage": "https://github.com/Gutenberg-Technology/cg-file-upload#readme",
+  "files": [
+    "cg-file-upload.js",
+    "cg-file-upload-worker.js",
+    "aws-sdk-2.3.19.min.js"
+  ],
   "dependencies": {
+    "angular": "^1.4"
+  },
+  "devDependencies": {
+    "angular-precommit": "^1.0.3",
+    "angular-release": "1.1.3",
     "coffee-script": "1.12.2",
     "gulp": "3.9.1",
     "gulp-coffee": "2.3.3",
     "gulp-coffeelint": "0.6.0",
     "gulp-concat": "2.6.1",
     "gulp-plumber": "1.1.0",
-    "gulp-rename": "1.2.2"
+    "gulp-rename": "1.2.2",
+    "husky": "2.7.0"
   },
-  "devDependencies": {
-    "angular-precommit": "^1.0.3",
-    "angular-release": "1.1.3"
+  "husky": {
+    "hooks": {
+      "commit-msg": "node ./node_modules/angular-precommit/index.js $HUSKY_GIT_PARAMS"
+    }
   }
 }
