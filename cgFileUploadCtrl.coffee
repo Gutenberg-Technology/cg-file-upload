@@ -212,7 +212,7 @@ angular.module('cg.fileupload')
             if @onBeforeUpload
                 promise = @onBeforeUpload(_ctrl)
                 if promise?.then?
-                    promise.then(_doUpload)
+                    promise.then(_doUpload).catch(@_errorHandler)
                 else _doUpload()
             else _doUpload()
     
