@@ -456,7 +456,7 @@ angular.module('cg.fileupload').factory('cgFileUploadCtrl', function($timeout, $
       if (this.onBeforeUpload) {
         promise = this.onBeforeUpload(_ctrl);
         if ((promise != null ? promise.then : void 0) != null) {
-          return promise.then(_doUpload);
+          return promise.then(_doUpload)["catch"](this._errorHandler);
         } else {
           return _doUpload();
         }
