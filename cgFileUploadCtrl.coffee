@@ -15,7 +15,6 @@ angular.module('cg.fileupload')
             @_input?.parentElement?.removeChild @_input
             @_input = document.createElement 'input'
             @_input.type = 'file'
-            @_input.setAttribute 'multiple', ''
             @_input.style.display = 'none'
             @_input.accept = @accept if @accept
             @_input.addEventListener 'change', =>
