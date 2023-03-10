@@ -5,7 +5,7 @@ angular.module('cg.fileupload')
 
         constructor: (
             @elem = null
-            { @accept, @uploadUrl, @uploadMethod, @awscredentials, @disableNormalization }
+            { @accept, @multiple, @uploadUrl, @uploadMethod, @awscredentials, @disableNormalization }
             { @onNextUpload, @onBeforeUpload, @onUploadStart, @onProgress, @onLoad, @onError }
         ) ->
             @_createInput()
@@ -15,6 +15,7 @@ angular.module('cg.fileupload')
             @_input?.parentElement?.removeChild @_input
             @_input = document.createElement 'input'
             @_input.type = 'file'
+            @_input.setAttribute 'multiple', '' if @multiple is 'true'
             @_input.style.display = 'none'
             @_input.accept = @accept if @accept
             @_input.addEventListener 'change', =>
