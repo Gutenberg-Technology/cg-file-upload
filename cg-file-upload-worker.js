@@ -1,6 +1,6 @@
 var uploadChunk;
 
-uploadChunk = function(blob, url, method, filename, chunk, chunks) {
+uploadChunk = function(blob, url, method, filename, chunk, chunks, contentType) {
   var formData, xhr;
   xhr = new XMLHttpRequest;
   xhr.open(method, url, false);
@@ -12,6 +12,7 @@ uploadChunk = function(blob, url, method, filename, chunk, chunks) {
   formData.append('chunk', chunk);
   formData.append('chunks', chunks);
   formData.append('file', blob);
+  formData.append('contentType', contentType);
   xhr.send(formData);
   return xhr.responseText;
 };
@@ -34,7 +35,7 @@ this.onmessage = function(e) {
   }
   for (i = j = 0, len = blobs.length; j < len; i = ++j) {
     blob = blobs[i];
-    response = uploadChunk(blob, url, method, name, i, blobs.length);
+    response = uploadChunk(blob, url, method, name, i, blobs.length, file.type);
     data = {
       message: 'progress',
       body: ((i + 1) * 100 / blobs.length).toFixed(0)

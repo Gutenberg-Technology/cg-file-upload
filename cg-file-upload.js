@@ -37,6 +37,7 @@ angular.module('cg.fileupload').provider('CgFileUpload', function() {
     restrict: 'A',
     scope: {
       accept: '@',
+      multiple: '@',
       progress: '=?',
       filename: '=?',
       onupload: '&',
@@ -116,6 +117,7 @@ angular.module('cg.fileupload').provider('CgFileUpload', function() {
       });
       options = {
         accept: scope.accept,
+        multiple: scope.multiple,
         uploadUrl: scope.uploadUrl || CgFileUpload.uploadUrl,
         uploadMethod: scope.uploadMethod || CgFileUpload.uploadMethod,
         awscredentials: $parse(attrs.awscredentials)(scope),
@@ -175,7 +177,7 @@ angular.module('cg.fileupload').factory('cgFileUploadCtrl', function($timeout, $
 
     function cgFileUploadCtrl(elem, arg, arg1) {
       this.elem = elem != null ? elem : null;
-      this.accept = arg.accept, this.uploadUrl = arg.uploadUrl, this.uploadMethod = arg.uploadMethod, this.awscredentials = arg.awscredentials, this.disableNormalization = arg.disableNormalization;
+      this.accept = arg.accept, this.multiple = arg.multiple, this.uploadUrl = arg.uploadUrl, this.uploadMethod = arg.uploadMethod, this.awscredentials = arg.awscredentials, this.disableNormalization = arg.disableNormalization;
       this.onNextUpload = arg1.onNextUpload, this.onBeforeUpload = arg1.onBeforeUpload, this.onUploadStart = arg1.onUploadStart, this.onProgress = arg1.onProgress, this.onLoad = arg1.onLoad, this.onError = arg1.onError;
       this._errorHandler = bind(this._errorHandler, this);
       this.start = bind(this.start, this);
@@ -193,7 +195,9 @@ angular.module('cg.fileupload').factory('cgFileUploadCtrl', function($timeout, $
       }
       this._input = document.createElement('input');
       this._input.type = 'file';
-      this._input.setAttribute('multiple', '');
+      if (this.multiple === 'true') {
+        this._input.setAttribute('multiple', '');
+      }
       this._input.style.display = 'none';
       if (this.accept) {
         this._input.accept = this.accept;
