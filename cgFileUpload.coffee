@@ -32,6 +32,7 @@ angular.module('cg.fileupload')
     restrict: 'A'
     scope:
         accept: '@'
+        multiple: '@'
         progress: '=?'
         filename: '=?'
         onupload: '&'
@@ -93,6 +94,7 @@ angular.module('cg.fileupload')
 
         options =
             accept: scope.accept
+            multiple: scope.multiple
             uploadUrl: scope.uploadUrl or CgFileUpload.uploadUrl
             uploadMethod: scope.uploadMethod or CgFileUpload.uploadMethod
             awscredentials: $parse(attrs.awscredentials)(scope)
