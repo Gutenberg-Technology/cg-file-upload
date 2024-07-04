@@ -1,3 +1,8 @@
+<a name="1.1.7"></a>
+## [1.1.7](https://github.com/Gutenberg-Technology/cg-file-upload/compare/1.1.6...1.1.7) (2024-07-04)
+
+
+
 <a name="1.1.6"></a>
 ## [1.1.6](https://github.com/Gutenberg-Technology/cg-file-upload/compare/1.1.5...1.1.6) (2023-03-23)
 
