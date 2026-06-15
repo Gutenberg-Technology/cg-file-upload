@@ -41,7 +41,7 @@
     "gulp-concat": "2.6.1",
     "gulp-plumber": "1.1.0",
     "gulp-rename": "1.2.2",
-    "husky": "2.7.0"
+    "husky": "9.1.7"
   },
   "husky": {
     "hooks": {
