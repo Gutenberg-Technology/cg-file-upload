@@ -1,11 +1,13 @@
 {
-  "name": "cg-file-upload",
+  "name": "@gutenberg-technology/cg-file-upload",
   "version": "1.1.7",
   "description": "Angular directive and controller to manage file upload",
   "main": "cg-file-upload.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "release": "gulp && node node_modules/.bin/angular-release"
+    "build": "gulp",
+    "prepack": "npm run build",
+    "release": "gulp && node node_modules/.bin/angular-release",
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
     "type": "git",
@@ -47,5 +49,8 @@
     "hooks": {
       "commit-msg": "node ./node_modules/angular-precommit/index.js $HUSKY_GIT_PARAMS"
     }
+  },
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com/"
   }
 }
